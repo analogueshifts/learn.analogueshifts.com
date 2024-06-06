@@ -4,7 +4,7 @@ import Link from "next/link";
 import ApplicationLogo from "./application-logo";
 import { useState } from "react";
 
-const MobileNavbar = () => {
+const MobileNavbar = ({ scrollToSection }: any) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -50,12 +50,15 @@ const MobileNavbar = () => {
         >
           Contact Us
         </Link>
-        <Link
-          href="/register"
+        <button
+          onClick={() => {
+            setOpen(false);
+            scrollToSection("payment-plan");
+          }}
           className="w-full bg-[rgb(51,51,51)] h-[40px] justify-center flex items-center duration-300 hover:bg-[rgb(51,51,51)]/90 text-white text-base font-normal rounded-[6px]"
         >
           Register Here
-        </Link>
+        </button>
       </div>
     </nav>
   );

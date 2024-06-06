@@ -30,7 +30,7 @@ const Navigation = ({ scrollToSection }: any) => {
           </button>
         </div>
       </nav>
-      <MobileNavbar />
+      <MobileNavbar scrollToSection={scrollToSection} />
     </div>
   );
 };

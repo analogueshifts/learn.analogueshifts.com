@@ -22,7 +22,7 @@ const AnimatedNumber = ({
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: triggerRef.current,
-          start: "top 70%",
+          start: "top bottom",
           onEnter: () => tl.play(),
         },
         paused: true,
@@ -33,7 +33,7 @@ const AnimatedNumber = ({
         { innerHTML: 0 },
         {
           innerHTML: targetNumber,
-          duration: 0.7,
+          duration: 0.3,
           ease: "power1.out",
           snap: { innerHTML: 1 },
           onUpdate: function () {
