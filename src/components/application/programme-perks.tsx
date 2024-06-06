@@ -5,7 +5,7 @@ const ProgrammePerks = () => {
   return (
     <section className="bg-snow py-24">
       <div className="mobile:w-[75%] w-[85%] mobile:max-w-[850px] mx-auto flex flex-col gap-5 mb-10">
-        <h2 className="text-charcoalGray font-semibold text-2xl laptop:text-4xl leading-[1.2em]">
+        <h2 className="text-charcoalGray font-bold text-2xl laptop:text-4xl leading-[1.2em]">
           LETS TAKE A LOOK INSIDE THE PROGRAMME, SHALL WE ?
         </h2>
         <TextUnderline />
@@ -52,7 +52,7 @@ const ProgrammePerks = () => {
             return (
               <div className="w-full flex flex-col" key={crypto.randomUUID()}>
                 <div className="w-full flex flex-col gap-3 mb-5">
-                  <h2 className="text-dimLight font-medium text-xl laptop:text-[28px] leading-[1.2em]">
+                  <h2 className="text-dimLight font-bold text-xl laptop:text-[28px] leading-[1.2em]">
                     {item.title}
                   </h2>
                   <TextUnderline />
@@ -64,7 +64,7 @@ const ProgrammePerks = () => {
                         key={content}
                         className="w-full py-1.5 border-b-[3px] border-[#222222]"
                       >
-                        <p className="font-medium text-lg laptop:text-xl text-lightGray">
+                        <p className="font-semibold text-lg laptop:text-xl text-lightGray">
                           {content}
                         </p>
                       </div>

@@ -45,13 +45,13 @@ const MobileNavbar = () => {
           Recruitment Site
         </Link>
         <Link
-          href="/contact"
+          href="https://www.analogueshifts.com/contact"
           className="w-full h-[40px] justify-center flex items-center duration-300 hover:bg-lightGray/30 text-dimGray text-base font-normal rounded-[6px]"
         >
           Contact Us
         </Link>
         <Link
-          href=""
+          href="/register"
           className="w-full bg-[rgb(51,51,51)] h-[40px] justify-center flex items-center duration-300 hover:bg-[rgb(51,51,51)]/90 text-white text-base font-normal rounded-[6px]"
         >
           Register Here

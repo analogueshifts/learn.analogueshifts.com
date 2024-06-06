@@ -14,6 +14,7 @@ const config = {
       laptop: "1200px",
       tablet: "1000px",
       mobile: "860px",
+      miniMobile: "600px",
     },
     container: {
       center: true,
@@ -62,6 +63,7 @@ const config = {
         border: "hsl(var(--border))",
         darkCharcoal: "rgb(51, 51, 51)",
         charcoalGray: "#333333",
+        auxRed: "rgb(201, 0, 0)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",

@@ -11,15 +11,19 @@ import { Input } from "../ui/input";
 import Comobox from "./comobox";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import ParticlesBackground from "../ui/particles";
 
 const RegistrationForm = () => {
   const [skillLevel, setSkillLevel] = useState("");
   const [country, setCountry] = useState("");
 
   return (
-    <section className="w-full bg-aliceBlue py-24">
-      <form className="w-[94%] max-w-[960px] bg-white mx-auto p-5 mobile:py-50 mobile:px-100">
-        <h2 className="text-charcoalGray font-semibold text-2xl laptop:text-4xl leading-[1.2em] text-center">
+    <section className="w-full relative bg-transparent py-24 mt-24">
+      <div className="fixed -z-10 top-24 left-0 w-full h-[80vh]">
+        <ParticlesBackground />
+      </div>
+      <form className="w-[94%] z-30 max-w-[830px] bg-white mx-auto p-5 mobile:py-[25px] mobile:px-[50px]">
+        <h2 className="text-charcoalGray font-bold text-2xl laptop:text-4xl leading-[1.2em] text-center">
           We look Forward To having you <br /> Please Fill the Form Below To
           Register
         </h2>

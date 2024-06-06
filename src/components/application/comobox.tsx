@@ -55,7 +55,7 @@ export function ComboBoxResponsive({
           <ChevronDown width={15} color="rgba(105,105,105,0.6)" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[760px]">
+      <PopoverContent className="w-[720px] max-w-[calc(100vw-60px)]">
         <div className="">
           <StatusList setValue={setValue} list={list} setOpen={setOpen} />
         </div>

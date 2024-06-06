@@ -10,8 +10,8 @@ import ApplicationLogo from "./application-logo";
 
 const Footer = () => {
   return (
-    <footer className=" w-[94%] max-w-full overflow-hidden mobile:max-w-desktop mx-auto py-24 px-4">
-      <div className="w-full flex flex-col gap-10">
+    <footer className="w-full bg-white max-w-full overflow-hidden">
+      <div className="w-[94%] mobile:max-w-desktop mx-auto py-24 px-4 flex flex-col gap-10">
         <ApplicationLogo />
 
         <div className="grid gap-3 text-xl text-dimGray font-medium w-max max-w-full">

@@ -1,3 +1,9 @@
+"use client";
+import gsap from "gsap";
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -6,10 +12,35 @@ import Reward from "@/assets/images/reward.svg";
 
 import { socials } from "@/resources/socials";
 
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
 const Introduction = () => {
+  const imageRef: any = useRef(null);
+  const triggerRef: any = useRef(null);
+
+  useGSAP(() => {
+    const image = imageRef.current;
+
+    if (image) {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: triggerRef.current,
+          start: "top bottom",
+          onEnter: () => tl.play(),
+        },
+        paused: true,
+      });
+
+      tl.to(image, { rotate: 0, duration: 0.3 });
+    }
+  }, []);
+
   return (
-    <section className="mobile:w-[94%] w-[324px] gap-y-6 max-w-[94%] rounded-full border border-neuralTone mobile:max-w-[960px] p-3 mx-auto mt-36 mb-20 flex mobile:flex-row flex-col h-max items-center justify-between">
-      <div className="mobile:w-260 w-full h-max">
+    <section
+      ref={triggerRef}
+      className="mobile:w-[94%] w-[324px] gap-y-6 max-w-[94%] rounded-full border border-neuralTone mobile:max-w-[960px] p-3 mx-auto mt-24 mb-20 flex mobile:flex-row flex-col h-max items-center justify-between"
+    >
+      <div ref={imageRef} className="mobile:w-260 w-full h-max rotate-[-90deg]">
         <Image
           src={Avatar}
           alt="Avatar Image"
@@ -18,7 +49,7 @@ const Introduction = () => {
       </div>
       <div className="mobile:w-introductionSection pb-8 mobile:pb-0 w-full gap-5 mobile:pr-7 px-2 h-max flex flex-col">
         <div className="w-full flex items-center mobile:justify-start justify-between mobile:gap-5">
-          <h1 className="text-charcoalGray font-medium text-[22px] moblie:text-2xl laptop:text-4xl leading-[1.2em]">
+          <h1 className=" text-charcoalGray font-semibold text-[22px] moblie:text-2xl laptop:text-4xl leading-[1.2em]">
             Hi! I&apos;m Richard
           </h1>
           <div className="w-max h-max rounded-full bg-aliceBlue py-1 px-3.5 flex items-center gap-1">
@@ -26,7 +57,7 @@ const Introduction = () => {
             <Image src={Reward} alt="" className="h-4 w-max" />
           </div>
         </div>
-        <p className="text-[rgb(89,89,89)] text-lg font-normal">
+        <p className=" text-[rgb(89,89,89)] text-lg font-normal">
           I am the Product Manager at Analogue Shifts, I&apos;m thrilled to
           introduce our user-friendly DevOps training program designed to guide
           you through the complexities of this dynamic field. With our track

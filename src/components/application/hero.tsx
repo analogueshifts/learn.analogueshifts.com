@@ -10,63 +10,47 @@ import BookImage from "@/assets/images/book.svg";
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(useGSAP);
 
 const Hero = () => {
   useGSAP(() => {
-    const elements = document.querySelectorAll(".words-slide-down");
-
-    elements.forEach((element: any) => {
-      gsap.set(element, { opacity: 1 });
-      const chars = element.innerText.split("");
-      element.innerHTML = chars
-        .map((char: any) => `<span class="char">${char}</span>`)
-        .join("");
-
-      gsap.from(element.querySelectorAll(".char"), {
-        opacity: 0,
-        yPercent: -100,
-        duration: 0.5,
-        ease: "power1.out",
-        stagger: {
-          amount: 0.5,
-        },
-      });
-    });
-
     gsap.to(".girl", { scale: 1, duration: 1.5 });
     gsap.to(".infinity", { scale: 1, rotate: -10, duration: 1.5 });
     gsap.to(".book", { scale: 1, rotate: 10, duration: 1.5 });
     gsap.to(".stack", { scale: 1, duration: 1.5 });
   }, []);
 
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="w-full pt-[120px] pb-20 h-max max-w-full overflow-x-hidden  tablet:max-w-desktop mx-auto flex mobile:flex-row flex-col justify-between items-center px-4">
-      <div className="laptop:w-[calc(100%-430px)] mb-28 px-3 mobile:px-0 mobile:mb-0 w-full mobile:w-6/12 mt-[65px] mobile:mt-[86px]">
+    <section className="w-full pt-[120px] pb-20 h-max max-w-full max-[500px]:overflow-x-hidden  tablet:max-w-desktop mx-auto flex mobile:flex-row flex-col justify-between items-center px-4">
+      <div className="laptop:w-[calc(100%-430px)] mb-10 px-3 mobile:px-0 mobile:mb-0 w-full mobile:w-6/12 mt-[65px] mobile:mt-[86px]">
         <h1 className="laptop:text-[56px] mobile:text-[45px] text-[35px] mb-6 laptop:leading-[68px] leading-[56px]">
-          <strong className="text-dimLight words-slide-down opacity-0">
-            Master DevOps:
-          </strong>{" "}
-          <span className="text-[rgb(89,89,89)] font-medium words-slide-down opacity-0">
+          <strong className="text-dimLight ">Master DevOps:</strong>{" "}
+          <span className="text-[rgb(89,89,89)] font-semibold">
             Exclusive Training
           </span>
         </h1>
-        <p className="words-slide-down text-lg text-[#595959] mb-6 opacity-0">
+        <p className=" text-lg text-[#595959] mb-6">
           Join for exclusive access to premium tutorials, behind-the-scenes, and
           more. Elevate your skill set and acquire a skill that is on high
           demand today{" "}
         </p>
         <div className="flex mobile:flex-row flex-col items-start mobile:items-center">
-          <Link
-            href=""
-            className="px-6 bg-dimLight h-[50px] flex items-center duration-300 hover:bg-dimLight/70 text-white text-base font-medium rounded-[6px]"
+          <button
+            onClick={() => scrollToSection("payment-plan")}
+            className="px-6 bg-dimGray h-[50px] flex items-center duration-300 hover:bg-dimGray/90 text-white text-base font-medium rounded-[6px]"
           >
             Register Here
-          </Link>
+          </button>
           <Link
-            href="/contact"
+            href="https://www.analogueshifts.com/contact"
             className="px-0 mobile:px-6  h-[50px] flex items-center  underline text-base font-medium text-dimLight"
           >
             Contact Us
