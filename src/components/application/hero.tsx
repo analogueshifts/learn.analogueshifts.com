@@ -30,7 +30,7 @@ const Hero = () => {
 
   return (
     <section className="w-full pt-[120px] pb-20 h-max max-w-full max-[500px]:overflow-x-hidden  tablet:max-w-desktop mx-auto flex mobile:flex-row flex-col justify-between items-center px-4">
-      <div className="laptop:w-[calc(100%-430px)] mb-5 px-3 mobile:px-0 mobile:mb-0 w-full mobile:w-6/12 mt-[35px] mobile:mt-[86px]">
+      <div className="laptop:w-[calc(100%-430px)] mb-2 px-3 mobile:px-0 mobile:mb-0 w-full mobile:w-6/12 mt-[35px] mobile:mt-[86px]">
         <h1 className="laptop:text-[56px] mobile:text-[45px] text-[30px] leading-[40px] mb-6 laptop:leading-[68px] mobile:leading-[56px]">
           <strong className="text-dimLight ">Master DevOps:</strong> <br />
           <span className="text-[rgb(89,89,89)] font-semibold">
