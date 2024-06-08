@@ -118,7 +118,7 @@ const PaymentPlan = () => {
               </div>
             );
           })}
-          <div className="miniMobile:w-[calc(50%-10px)] w-full  h-max plan-box bg-white rounded-[20px] p-[30px]">
+          {/* <div className="miniMobile:w-[calc(50%-10px)] w-full  h-max plan-box bg-white rounded-[20px] p-[30px]">
             <p className="text-sm font-semibold mb-5 leading-[1.5em] text-davyGray">
               Invitational to induction Week
             </p>
@@ -161,7 +161,7 @@ const PaymentPlan = () => {
             >
               Buy Now
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>
