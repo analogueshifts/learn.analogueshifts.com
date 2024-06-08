@@ -11,7 +11,7 @@ const PaymentPlan = () => {
 
   return (
     <section id="payment-plan" className="w-full relative bg-white pt-24 pb-24">
-      <div className="w-[94%] z-30 max-w-[1128px] bg-white mx-auto ">
+      <div className="w-[94%] z-30 max-w-[800px] bg-white mx-auto ">
         <div className="w-full flex justify-center mb-3">
           <PeopleStack />
         </div>
@@ -21,12 +21,12 @@ const PaymentPlan = () => {
         <p className="text-center text-charcoalGray text-xl mb-12 laptop:text-3xl leading-[1.2em] font-semibold">
           Choose Your Payment Plan{" "}
         </p>
-        <div className="w-full grid grid-cols-1 miniMobile:grid-cols-2 tablet:grid-cols-3 gap-5">
+        <div className="flex flex-wrap w-full gap-5 items-center justify-center">
           {paymentPlans.map((item) => {
             return (
               <div
                 key={item.name}
-                className="plan-box h-max col-span-1 bg-white rounded-[20px] p-[30px]"
+                className="plan-box h-max miniMobile:w-[calc(50%-10px)] w-full bg-white rounded-[20px] p-[30px]"
               >
                 <p className="text-sm font-semibold mb-5 leading-[1.5em] text-davyGray">
                   {item.name}
@@ -118,7 +118,7 @@ const PaymentPlan = () => {
               </div>
             );
           })}
-          <div className="plan-box h-max col-span-1 bg-white rounded-[20px] p-[30px]">
+          <div className="miniMobile:w-[calc(50%-10px)] w-full  h-max plan-box bg-white rounded-[20px] p-[30px]">
             <p className="text-sm font-semibold mb-5 leading-[1.5em] text-davyGray">
               Invitational to induction Week
             </p>
