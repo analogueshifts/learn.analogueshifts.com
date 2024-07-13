@@ -43,13 +43,13 @@ const PaymentPlan = () => {
                   <h2 className="font-bold text-charcoalGray text-3xl">
                     <strong> {item.discountPrice.now}</strong>
                   </h2>
-                  {item.discountPrice.later && (
+                  {/* {item.discountPrice.later && (
                     <p className="text-xl font-medium text-green-600">
                       <strong>now</strong>
                     </p>
-                  )}
+                  )} */}
                 </div>
-                {item.discountPrice.later && (
+                {/* {item.discountPrice.later && (
                   <div className="flex gap-2 items-end">
                     <h2 className="font-bold text-charcoalGray text-base">
                       <strong> {item.discountPrice.later}</strong>
@@ -59,7 +59,7 @@ const PaymentPlan = () => {
                       <strong>later</strong>
                     </p>
                   </div>
-                )}
+                )} */}
                 <p className="cohort-almost-full mt-3 text-sm text-auxRed font-semibold mb-5">
                   The Cohort is almost full{" "}
                 </p>
