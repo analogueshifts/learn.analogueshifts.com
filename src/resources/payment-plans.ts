@@ -2,7 +2,7 @@ export const paymentPlans = [
   {
     name: "One-time Payment",
     mainPrice: "$3000",
-    discountPercent: "20% off",
+    discountPercent: "50% off",
     discountPrice: {
       now: "$1000",
     },
@@ -33,8 +33,8 @@ export const paymentPlans = [
   },
   {
     name: "Two-time Payment ",
-    mainPrice: "$3000",
-    discountPercent: "20% off",
+    mainPrice: "$1000",
+    discountPercent: "50% off",
     discountPrice: {
       now: "$500",
     },
