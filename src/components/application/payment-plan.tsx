@@ -39,27 +39,25 @@ const PaymentPlan = () => {
                     {item.discountPercent}{" "}
                   </p>
                 </div>
-                <div className="flex gap-2 items-end">
+                <div className="flex gap-2 items-end border-b border-black/5 pb-2 mb-2">
                   <h2 className="font-bold text-charcoalGray text-3xl">
-                    <strong> {item.discountPrice.now}</strong>
+                    <strong> {item.discountPrice}</strong>
                   </h2>
-                  {item.discountPrice.later && (
-                    <p className="text-xl font-medium text-green-600">
-                      <strong>now</strong>
-                    </p>
-                  )}
+                  <h3 className="font-bold text-charcoalGray text-lg">
+                    <strong> Full Payment</strong>
+                  </h3>
                 </div>
-                {item.discountPrice?.later && (
-                  <div className="flex gap-2 items-end">
-                    <h2 className="font-bold text-charcoalGray text-base">
-                      <strong> {item.discountPrice.later}</strong>
-                    </h2>
 
-                    <p className="text-xl font-medium text-green-600">
-                      <strong>later</strong>
-                    </p>
-                  </div>
-                )}
+                <div className="flex gap-2 items-center">
+                  <p className="text-sm font-semibold text-davyGray">
+                    $1000 now
+                  </p>
+                  <p className="text-base font-semibold text-davyGray">&</p>
+                  <p className="text-sm font-semibold text-davyGray">
+                    $500 later
+                  </p>
+                </div>
+
                 <p className="cohort-almost-full mt-3 text-sm text-auxRed font-semibold mb-5">
                   The Cohort is almost full{" "}
                 </p>
