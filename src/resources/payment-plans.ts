@@ -21,7 +21,8 @@ export const paymentPlans = [
       },
       {
         title: "Career Support",
-        description: "Resume review, or job placement assistance.",
+        description:
+          "Resume review, job placement assistance, and remote support for clients in tech roles.",
       },
     ],
     otherBenefits: [
@@ -53,7 +54,8 @@ export const paymentPlans = [
       },
       {
         title: "Career Support",
-        description: "Resume review, or job placement assistance.",
+        description:
+          "Resume review, job placement assistance, and remote support for clients in tech roles.",
       },
     ],
     otherBenefits: [
