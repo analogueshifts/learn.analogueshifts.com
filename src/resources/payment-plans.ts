@@ -4,7 +4,8 @@ export const paymentPlans = [
     mainPrice: "$3000",
     discountPercent: "50% off",
     discountPrice: {
-      now: "$1000",
+      now: "$1500",
+      later: null,
     },
     benefits: [
       {
@@ -33,11 +34,12 @@ export const paymentPlans = [
     ],
   },
   {
-    name: "Two-time Payment ",
-    mainPrice: "$1000",
+    name: "Installmentally",
+    mainPrice: "$3000",
     discountPercent: "50% off",
     discountPrice: {
-      now: "$500",
+      now: "$1000",
+      later: "$500",
     },
     benefits: [
       {
