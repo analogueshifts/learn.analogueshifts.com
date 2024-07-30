@@ -107,12 +107,12 @@ const PaymentPlan = () => {
                     );
                   })}
                 </div>
-                <button
+                {/* <button
                   onClick={() => router.push("/register")}
                   className="w-full bg-dimGray h-10 flex justify-center items-center duration-300 hover:bg-dimGray/90 text-white text-base mt-7 font-medium rounded-[6px]"
                 >
                   Buy Now
-                </button>
+                </button> */}
               </div>
             );
           })}
