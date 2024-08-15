@@ -49,12 +49,12 @@ const Hero = () => {
           >
             Register Here
           </button>
-          <Link
+          {/* <Link
             href="https://www.analogueshifts.com/contact"
             className="px-0 mobile:px-6  h-[50px] flex items-center  underline text-base font-medium text-dimLight"
           >
             Contact Us
-          </Link>
+          </Link> */}
         </div>
       </div>
       <div className="tablet:w-heroImage w-[350px] pt-20">

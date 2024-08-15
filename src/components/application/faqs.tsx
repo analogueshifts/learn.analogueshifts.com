@@ -9,7 +9,7 @@ import { questionsAndAnswers } from "@/resources/questions-answers";
 
 const FAQS = () => {
   return (
-    <section className="bg-snow py-24">
+    <section className="bg-snow pt-10 laptop:pt-14 pb-24">
       <div className="w-[94%] max-w-[960px] mx-auto flex flex-col gap-5">
         <h2 className="text-charcoalGray mb-3 text-center font-medium text-2xl laptop:text-4xl leading-[1.2em]">
           Answers to <br />

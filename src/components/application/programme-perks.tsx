@@ -1,5 +1,7 @@
-import { programmeContent } from "@/resources/programme-content";
+"use client";
 import TextUnderline from "../ui/text-underline";
+import { programmeContent } from "@/resources/programme-content";
+import { scrollToSection } from "@/resources/scroll-to-section";
 
 const ProgrammePerks = () => {
   return (
@@ -89,6 +91,18 @@ const ProgrammePerks = () => {
             </p>
             <TextUnderline />
           </div>
+          <h2 className="laptop:text-xl text-base w-full flex justify-center mt-6 laptop:text-start  ">
+            <span className=" font-medium text-lightGray">
+              Ready to master DevOps?
+            </span>
+            &nbsp;
+            <button
+              onClick={() => scrollToSection("payment-plan")}
+              className="font-bold text-lightGray"
+            >
+              Register here
+            </button>
+          </h2>
         </div>
       </div>
     </section>
