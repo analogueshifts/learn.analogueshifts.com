@@ -62,7 +62,11 @@ const PaymentPlan = () => {
                   The Cohort is almost full{" "}
                 </p>
                 <button
-                  onClick={() => router.push("/register")}
+                  onClick={() =>
+                    router.push(
+                      "https://events.analogueshifts.app/show/DevOps_Training"
+                    )
+                  }
                   className="w-full bg-dimGray h-10 flex justify-center items-center duration-300 hover:bg-dimGray/90 text-white text-base mb-7 font-medium rounded-[6px]"
                 >
                   Buy Now
