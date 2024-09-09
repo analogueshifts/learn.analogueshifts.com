@@ -28,6 +28,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://learn.analogueshifts.app",
   },
+  verification: {
+    google: "wNT1hvWDYGZp2pbVAHsjrug-fDv3T_Z0uxTL_SWBOwc",
+  },
 };
 
 export default function RootLayout({
