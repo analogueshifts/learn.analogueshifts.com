@@ -29,7 +29,7 @@ export default function DownloadOutlineModal({ open, close }: Params) {
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
-            className="bg-white pb-6 w-[500px] max-w-full h-full 500:h-[550px] max-h-full rounded-2xl flex flex-col relative overflow-y-auto"
+            className="bg-white pb-6 w-[500px] max-w-full h-full 500:h-[550px] max-h-full rounded-none 500:rounded-2xl flex flex-col relative overflow-y-auto"
           >
             {/* Close Button */}
             <button
