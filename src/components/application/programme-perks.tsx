@@ -106,13 +106,13 @@ const ProgrammePerks = () => {
           <div className="w-full flex gap-3">
             <button
               onClick={() => setModalOpen(true)}
-              className="w-max px-5 tablet:px-3 bg-dimLight h-12 flex justify-center items-center duration-300 hover:bg-dimLight/90 text-white tablet:text-xs text-base mt-7 font-medium rounded-[6px]"
+              className="w-max tablet:px-5 px-3 bg-dimLight h-12 flex justify-center items-center duration-300 hover:bg-dimLight/90 text-white text-xs tablet:text-base mt-7 font-medium rounded-[6px]"
             >
               Download Course Outline
             </button>
             <button
               onClick={() => scrollToSection("payment-plan")}
-              className="w-max tablet:px-3 px-5 bg-dimLight h-12 flex justify-center items-center duration-300 hover:bg-dimLight/90 text-white tablet:text-xs text-base mt-7 font-medium rounded-[6px]"
+              className="w-max px-3 tablet:px-5 bg-dimLight h-12 flex justify-center items-center duration-300 hover:bg-dimLight/90 text-white text-xs tablet:text-base mt-7 font-medium rounded-[6px]"
             >
               Register Now
             </button>
