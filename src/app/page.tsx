@@ -16,7 +16,7 @@ export default function Home() {
       <Introduction />
       <PaymentPlan />
       <TelegramChannel />
-      <ProgrammePerks />
+      {/* <ProgrammePerks /> */}
       <FAQS />
       <NewsLetter />
     </GuestLayout>

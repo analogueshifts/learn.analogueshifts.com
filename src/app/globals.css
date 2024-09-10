@@ -121,3 +121,6 @@ body::-webkit-scrollbar {
   -webkit-text-stroke-color: rgb(0, 201, 0, 0.2);
   -webkit-text-stroke-width: 1.5px;
 }
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
