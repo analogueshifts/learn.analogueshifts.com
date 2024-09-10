@@ -1,11 +1,14 @@
 "use client";
-
+import { useState } from "react";
+import axios from "axios";
 import Image from "next/image";
 import Thumbnail from "@/assets/images/outline-thumbnail.jpg";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Spinner from "@/assets/images/spinner.svg";
 
 import { X } from "lucide-react";
+import { userDetails } from "@/resources/download-outline-details";
 
 interface Params {
   open: boolean;
@@ -13,8 +16,60 @@ interface Params {
 }
 
 export default function DownloadOutlineModal({ open, close }: Params) {
-  const handleFormSubmit = (e: any) => {
+  const [info, setInfo] = useState(userDetails);
+  const [loading, setLoading] = useState(false);
+
+  const handleFormSubmit = async (e: any) => {
     e.preventDefault();
+    let answers: any[] = [];
+    info?.forEach((item: any) => {
+      answers.push({
+        question_uuid: item.uuid,
+        answer: JSON.stringify(item.answer),
+      });
+    });
+    const config = {
+      method: "POST",
+      url:
+        process.env.NEXT_PUBLIC_BACKEND_URL +
+        "/tools/form/store/answers/9bc2e1cc-8b82-468e-8e7c-73002b64b0a1?email=" +
+        info[1].answer,
+      data: {
+        email: info[1].answer,
+        responses: answers,
+      },
+    };
+
+    try {
+      setLoading(true);
+      await axios.request(config);
+      setLoading(false);
+      const pdfUrl =
+        "/pdfs/DevOps-Program-Overview-Unlocking-Your-Career-Potential.pdf";
+      const a = document.createElement("a");
+      a.href = pdfUrl;
+      a.download =
+        "DevOps-Program-Overview-Unlocking-Your-Career-Potential.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      close();
+    } catch (error) {
+      setLoading(false);
+      window.alert("Failed to download outline, please try again later.");
+    }
+  };
+
+  const updateInfo = (uuid: string, newValue: string) => {
+    setInfo((prev) =>
+      prev.map((item: any) => {
+        if (item.uuid !== uuid) {
+          return item;
+        } else {
+          return { ...item, answer: newValue };
+        }
+      })
+    );
   };
 
   return (
@@ -56,25 +111,37 @@ export default function DownloadOutlineModal({ open, close }: Params) {
                 type="text"
                 required
                 placeholder="Full name"
+                value={info[0].answer}
+                onChange={(e) => updateInfo(info[0].uuid, e.target.value)}
                 className="w-full h-12 outline-none text-sm font-normal mb-3.5 text-boulder700 placeholder:text-boulder300 px-3 rounded-md border"
               />
               <input
                 type="email"
                 required
+                value={info[1].answer}
+                onChange={(e) => updateInfo(info[1].uuid, e.target.value)}
                 placeholder="Email address"
                 className="w-full h-12 outline-none text-sm font-normal mb-3.5 text-boulder700 placeholder:text-boulder300 px-3 rounded-md border"
               />
               <input
                 type="text"
                 required
+                value={info[2].answer}
+                onChange={(e) => updateInfo(info[2].uuid, e.target.value)}
                 placeholder="Phone number"
                 className="w-full h-12 outline-none text-sm font-normal mb-3.5 text-boulder700 placeholder:text-boulder300 px-3 rounded-md border"
               />
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full h-12 font-medium text-white text-sm flex justify-center items-center rounded-md outline-none bg-dimGray hover:bg-dimGray/80"
               >
-                Download
+                <Image
+                  src={Spinner}
+                  className={`${loading ? "block" : "hidden"} w-8 h-8`}
+                  alt=""
+                />{" "}
+                {!loading && "Download"}
               </button>
             </form>
           </motion.div>
