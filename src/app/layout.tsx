@@ -40,6 +40,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+       <head>
+          <link
+              rel="icon"
+              href="https://www.analogueshifts.com/logo.png"
+              sizes="any"
+          />
+      </head>
       <body
         className={cn(inter.className, "overflow-x-hidden w-full max-w-full")}
       >
