@@ -43,7 +43,7 @@ export default function RootLayout({
        <head>
           <link
               rel="icon"
-              href="https://www.analogueshifts.com/logo.png"
+              href="/favicon.ico"
               sizes="any"
           />
       </head>
