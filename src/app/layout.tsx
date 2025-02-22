@@ -43,7 +43,7 @@ export default function RootLayout({
        <head>
           <link
               rel="icon"
-              href="/favicon.ico"
+              href="https://raw.githubusercontent.com/analogueshifts/www.analogueshifts.com/refs/heads/master/public/favicon.ico"
               sizes="any"
           />
       </head>
