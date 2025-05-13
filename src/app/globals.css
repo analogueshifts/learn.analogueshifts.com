@@ -79,48 +79,163 @@ body::-webkit-scrollbar {
   display: none;
 }
 
-.more-information-hero {
-  box-shadow: 0 0.6021873017743928px 3.010936508871964px -0.3333333333333333px #00000005,
-    0 2.288533303243457px 11.442666516217285px -0.6666666666666666px #00000009,
-    0 10px 50px -1px #00000014;
+.accordion-dropshadow {
+  box-shadow: 0px 106px 250px 0px #00000014;
 }
 
-.perk-box {
-  box-shadow: 0 0.7961918735236395px 2.3885756205709185px -0.625px #0000000d,
-    0 2.414506143104518px 7.2435184293135535px -1.25px #0000000d,
-    0 6.382653521484461px 19.147960564453385px -1.875px #0000000d,
-    0 20px 60px -2.5px #0000000d;
+.lds-ellipsis,
+.lds-ellipsis div {
+  box-sizing: border-box;
 }
-.news-letter-input {
-  box-shadow: inset 0 0 0 0px
-    var(--token-292eb3fb-e580-4580-8416-c33d73f2f8ff, rgb(153, 167, 255));
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
 }
-
-.plan-box {
-  box-shadow: 0 0.7961918735236395px 2.3885756205709185px -0.625px #0000000d,
-    0 2.414506143104518px 7.2435184293135535px -1.25px #0000000d,
-    0 6.382653521484461px 19.147960564453385px -1.875px #0000000d,
-    0 20px 60px -2.5px #0000000d;
-}
-
-.discount-text::before {
-  content: "";
+.lds-ellipsis div {
   position: absolute;
-  width: 100%;
-  height: 1px;
-  background-color: rgb(153, 153, 153);
-  top: 50%;
-  left: 0;
+  top: 33.33333px;
+  width: 13.33333px;
+  height: 13.33333px;
+  border-radius: 50%;
+  background: #ffbb0a;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.review-box {
+  border: 0.67px solid #ffbb0a;
+}
+.lds-ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
 }
 
-.cohort-almost-full {
-  -webkit-text-stroke-color: rgb(201, 0, 0, 0.2);
-  -webkit-text-stroke-width: 1.5px;
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(24px, 0);
+  }
 }
-.cohort-almost-full-green {
-  -webkit-text-stroke-color: rgb(0, 201, 0, 0.2);
-  -webkit-text-stroke-width: 1.5px;
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.show-event-hero {
+  filter: blur(50px) brightness(0.9);
+}
+
+.helpful-link:hover div {
+  background-color: rgba(255, 187, 10, 0.1);
+}
+.slideshow {
+  background: linear-gradient(
+    90.99deg,
+    rgba(0, 0, 0, 0.6) 29.42%,
+    rgba(0, 0, 0, 0.16) 76.18%
+  );
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none;
+}
+
+input[type="password"]::-moz-svg-anonymous {
+  display: none;
+}
+
+input[type="password"]::-ms-reveal {
+  display: none;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.event-grid .share-button {
+  opacity: 0;
+}
+
+.event-grid:hover .share-button {
+  opacity: 1;
+}
+
+/* tiptap.css */
+.prose ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem; /* adjust as needed */
+}
+.prose ul {
+  list-style: disc;
+  margin-left: 1.5rem;
+}
+
+.prose p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  line-height: 2.2;
+}
+
+.hover-text-button:hover span:nth-child(1) {
+  transform: translateY(-20px);
+}
+.hover-text-button:hover span:nth-child(2) {
+  transform: translateY(0px);
+}
+
+.our-apps-menu {
+  box-shadow: 0px 106.29px 503.27px 0px rgba(0, 0, 0, 0.08);
+}
+.profile-menu:hover .profile-chevron {
+  transform: translateY(2px);
+}
+.truncate-2-lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .scroll-hidden::-webkit-scrollbar {
   display: none;
+}
+.review-box {
+  border: 0.67px solid #ffbb0a;
+}
+.light-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) -144.57%,
+    #ffffff 60.33%
+  );
 }

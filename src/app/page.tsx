@@ -1,15 +1,17 @@
-import FAQS from "@/components/application/faqs";
-import Landing from "@/components/application/landing";
-import NewsLetter from "@/components/application/news-letter";
+import Reviews from "@/components/application/home/reviews";
+import ExploreCourses from "@/components/application/home/explore-courses";
+import BrowseCourses from "@/components/application/home/browse-courses";
+import Landing from "@/components/application/home/landing";
+import MasterDevops from "@/components/application/home/master-devops";
+import Stats from "@/components/application/home/stats";
 import GuestLayout from "@/components/application/layouts/guest";
-import ProgrammePerks from "@/components/application/programme-perks";
-import Introduction from "@/components/application/introduction";
-import TelegramChannel from "@/components/application/telegram-channel";
-import PaymentPlan from "@/components/application/payment-plan";
-import VideoSection from "@/components/application/video-section";
 import { Metadata } from "next";
+import FAQ from "@/components/application/home/faqs";
+import NewsLetter from "@/components/application/home/news-letter";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://learn.analogueshifts.com"),
   title: "Online tech courses and tech trainings - Analogue Shifts",
   description:
     "Accelerate your tech career growth with our comprehensive online tech courses and training. Discover the latest tools and industry insights at your convenience.",
@@ -39,15 +41,17 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <GuestLayout>
-      <Landing />
-      <VideoSection />
-      <Introduction />
-      <PaymentPlan />
-      <TelegramChannel />
-      {/* <ProgrammePerks /> */}
-      <FAQS />
-      <NewsLetter />
-    </GuestLayout>
+    <Suspense>
+      <GuestLayout>
+        <Landing />
+        <Stats />
+        <MasterDevops />
+        <ExploreCourses />
+        <BrowseCourses />
+        <Reviews />
+        <FAQ />
+        <NewsLetter />
+      </GuestLayout>
+    </Suspense>
   );
 }

@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+import { UserProvider } from "@/contexts/user";
+import { ToastProvider } from "@/contexts/toast";
+import ToastMessage from "@/components/application/toast";
 
-const inter = Inter({ subsets: ["latin"] });
+const plusJakartaSans = Plus_Jakarta_Sans({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://learn.analogueshifts.com"),
   title: "Online tech courses and tech trainings - Analogue Shifts",
   description:
     "Accelerate your tech career growth with our comprehensive online tech courses and training. Discover the latest tools and industry insights at your convenience.",
@@ -40,17 +47,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-       <head>
-          <link
-              rel="icon"
-              href="https://raw.githubusercontent.com/analogueshifts/www.analogueshifts.com/refs/heads/master/public/favicon.ico"
-              sizes="any"
-          />
+      <head>
+        <link
+          rel="icon"
+          href="https://raw.githubusercontent.com/analogueshifts/www.analogueshifts.com/refs/heads/master/public/favicon.ico"
+          sizes="any"
+        />
       </head>
       <body
-        className={cn(inter.className, "overflow-x-hidden w-full max-w-full")}
+        className={cn(
+          plusJakartaSans.className,
+          "overflow-x-hidden w-full max-w-full"
+        )}
       >
-        {children}
+        <UserProvider>
+          <ToastProvider>
+            <ToastMessage />
+            {children}
+          </ToastProvider>
+        </UserProvider>
       </body>
     </html>
   );

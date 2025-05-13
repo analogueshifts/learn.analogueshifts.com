@@ -1,0 +1,75 @@
+[
+  {
+    "courseName": "Devops",
+    "name": "Exclusive DevOps Training",
+    "description": "Join for exclusive access to premium tutorials, behind-the-scenes, and more. Elevate your skill set and acquire a skill that is on high demand today",
+    "price": "$2,500",
+    "company": "Analogue Shifts",
+    "duration": "Self Paced",
+    "thumbnail": "/courses/devops.svg",
+    "preview": "/courses/devops-preview.svg",
+    "headline": "Master DevOps:Exclusive Training",
+    "slug": "devops",
+    "skillLevel": "Beginner",
+    "enrolledStudents": "6,234",
+    "whatToExpect": {
+      "summary": "Our collaborative team, alongside DevOps experts, has diligently designed this curriculum to ensure your readiness for employment upon program completion.",
+      "list": [
+        "Automate and manage infrastructure using tools like Terraform and Ansible.",
+        "Build robust deployment workflows with Jenkins, GitLab CI, or GitHub Actions.",
+        "Master AWS/Azure/GCP and container orchestration with Kubernetes and Docker.",
+        "Implement logging, metrics, and alerts using Prometheus, Grafana, or ELK."
+      ]
+    },
+    "instructor": {
+      "image": "/courses/devops-instructor.svg",
+      "about": "With years of experience in DevOps, cloud architecture, and automation, I am a passionate advocate for scalable, resilient, and efficient infrastructure."
+    },
+    "contents": [
+      {
+        "title": "Module 1: DevOps Fundamentals  (WEEK 1)",
+        "id": "content-one",
+        "lessons": [
+          "Lesson 1:Introduction to DevOps and its Importance",
+          "Lesson 2: Setting up your environment"
+        ]
+      }
+    ],
+    "review": "This DevOps course streamlined our deployments—now we ship code faster, with fewer outages!"
+  },
+  {
+    "courseName": "Machine Learning",
+    "slug": "machine-learning",
+    "name": "Machine Learning",
+    "description": "This training program equips participants with the essential skills to streamline machine learning deployment, automation, and maintenance.",
+    "price": "$500",
+    "company": "John Doe, Digital Training",
+    "duration": "6 hours",
+    "thumbnail": "/courses/machine-learning.svg",
+    "headline": "MASTERING MLOPS - A practical guide to scalable machine learning development",
+    "preview": "/courses/ml-preview.svg",
+    "enrolledStudents": "6,234",
+    "instructor": {
+      "about": "With years of experience in MLOps and machine learning engineering, I am a passionate advocate for scalable, real-world AI solutions.",
+      "image": "/courses/ml-instructor.svg"
+    },
+    "review": "This course transformed how I deploy ML models—clear, practical, and packed with real-world insights!",
+    "skillLevel": "Beginner",
+    "whatToExpect": {
+      "summary": "Covering everything from model development to CI/CD pipelines and production monitoring, it provides a hands-on approach to implementing MLOps best practices. By the end of the course, you'll be ready to build, deploy, and manage ML models efficiently in real-world applications.",
+      "list": [
+        "Hands-on MLOps best practices from model development to CI/CD pipelines and production monitoring.",
+        "Efficiently build, deploy, and manage ML models in real-world applications using MLOps principles.",
+        "Master MLOps tools and techniques for seamless model development, deployment, and maintenance.",
+        "End-to-end MLOps implementation, covering model training, deployment, CI/CD, and monitoring."
+      ]
+    },
+    "contents": [
+      {
+        "title": "Module 1: Introduction to MLOPS (WEEK 1)",
+        "id": "content-one",
+        "lessons": ["Lesson 1: understanding MLops"]
+      }
+    ]
+  }
+]

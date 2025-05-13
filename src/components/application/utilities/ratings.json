@@ -1,0 +1,30 @@
+[
+  {
+    "message": "This platform helped me quickly upskill for my new job. The flexibility and expert-led courses made learning so easy!",
+    "ratings": [1, 2, 3, 4, 5],
+    "userName": "Bola S.",
+    "userRole": "Event Coordinator",
+    "userImage": "/reviews/bola.svg"
+  },
+  {
+    "message": "The courses are high quality and practical. I’ve applied what I learned directly to my freelance work.",
+    "ratings": [1, 2, 3, 4, 5],
+    "userName": "Grace O.",
+    "userRole": "Webinar host",
+    "userImage": "/reviews/grace.svg"
+  },
+  {
+    "message": "This platform has made organizing my tech meetups a breeze. I can create and share events in minutes!",
+    "ratings": [1, 2, 3, 4, 5],
+    "userName": "Tunde A.",
+    "userRole": "Tech Enthusiast",
+    "userImage": "/reviews/tunde.svg"
+  },
+  {
+    "message": "I love the variety of course formats available. The instructors are knowledgeable, and the content is engaging.",
+    "ratings": [1, 2, 3, 4, 5],
+    "userName": "Bola S.",
+    "userRole": "Event Coordinator",
+    "userImage": "/reviews/bola.svg"
+  }
+]

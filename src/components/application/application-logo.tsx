@@ -1,12 +1,8 @@
+import Image from "next/image";
+import Logo from "@/assets/images/nav-logo.svg";
+
 const ApplicationLogo = () => (
-  <a href="https://www.analogueshifts.com" className="flex gap-3">
-    <img src="/logo.png" className="w-10 h-10" alt="" />
-    <h3 className="text-lg font-bold uppercase text-zinc-600 leading-5">
-      <span className="tracking-widest text-lightYellow">Analogue</span>
-      <br />
-      <span className="tracking-[.6rem]">Shifts</span>
-    </h3>
-  </a>
+  <Image src={Logo} alt="" className="w-40 h-max" />
 );
 
 export default ApplicationLogo;

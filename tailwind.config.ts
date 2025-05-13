@@ -10,13 +10,6 @@ const config = {
   ],
   prefix: "",
   theme: {
-    screens: {
-      laptop: "1200px",
-      tablet: "1000px",
-      mobile: "860px",
-      miniMobile: "600px",
-      500: "500px",
-    },
     container: {
       center: true,
       padding: "2rem",
@@ -25,72 +18,79 @@ const config = {
       },
     },
     extend: {
-      backgroundImage: {
-        lightBlueGradient:
-          "linear-gradient(180deg, rgb(245, 246, 255) 0%, rgb(255, 255, 255) 100%)",
-        lightGrayGradient:
-          "linear-gradient(180deg, rgb(245, 246, 255) 0%, rgb(255, 255, 255) 100%)",
-      },
-      backgroundColor: {
-        lightGray: "rgb(230, 230, 230)",
-        heroImage: "rgb(242, 221, 157)",
-        groupPersonOne: "rgb(253, 219, 255)",
-        groupPersonTwo: "rgb(194, 255, 239)",
-        groupPersonThree: "rgb(255, 212, 204)",
+      screens: {
+        "380": "380px",
+        "1186": "1186px",
+        "2xl": "1400px",
+        desktop: "1000px",
+        mobile: "500px",
+        tablet: {
+          raw: "(max-width: 999px)",
+        },
+        large: {
+          raw: "(min-width: 1440px) and (min-height: 1040px)",
+        },
       },
       maxWidth: {
-        desktop: "1000px",
+        desktop: "1200px",
+        createPage: "850px",
       },
-      height: {
-        heroImage: "400px",
-        heroGirl: "530px",
+      maxHeight: {
+        emptyBox: "250px",
       },
       width: {
-        heroImage: "400px",
-        heroGirl: "353px",
-        275: "275px",
-        260: "260px",
-        introductionSection: "calc(100% - 290px)",
+        "107": "107px",
       },
-      padding: {
-        50: "50px",
-        100: "100px",
+      height: {
+        "107": "107px",
+        allEventsSection: "calc(100% - 128px)",
       },
       colors: {
-        darkYellow: "#FFBB0A", // yellow - 800
-        lightYellow: "#D5AE35",
-        neuralTone: "#e0e0e0",
-        mediumDarkGray: "rgb(89, 89, 89)",
         border: "hsl(var(--border))",
-        darkCharcoal: "rgb(51, 51, 51)",
-        charcoalGray: "#333333",
-        boulder50: "#F6F6F6",
-        boulder100: "#E7E7E7",
-        boulder200: "#D1D1D1",
-        boulder600: "#5D5D5D",
-        boulder300: "#B0B0B0",
-        boulder400: "#7B7B7B",
-        boulder500: "#6D6D6D",
-        boulder700: "#4F4F4F",
-        boulder900: "#3D3D3D",
-        boulder950: "#262626",
-        auxRed: "rgb(201, 0, 0)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: {
+          muted: "#f9fafb",
+          subtle: "#f3f4f6",
+          DEFAULT: "#ffffff",
+          emphasis: "#374151",
+          darkYellow: "#FFBB0A",
+          yellow700: "#EAB308",
+          brown: "#876307",
+          lightYellow: "#D5AE35",
+          white300: "#FEFEFE",
+          whisperGray: "#f8f7fa",
+          whisperWhite: "rgb(248, 247, 250)",
+          darkPurple: "rgba(30, 10, 60, 0.07)",
+        },
+        content: {
+          subtle: "#9ca3af",
+          DEFAULT: "#6b7280",
+          emphasis: "#374151",
+          strong: "#111827",
+          inverted: "#ffffff",
+          grayText: "#575757",
+        },
         foreground: "hsl(var(--foreground))",
-        dimGray: "rgb(38, 38, 38)",
-        dimLight: "rgb(64, 64, 64)",
-        lightGray: "rgb(153, 153, 153)",
-        gainsboro: "rgb(224, 224, 224)",
-        aliceBlue: "rgb(245, 246, 255)",
-        brilliantBlue: "rgb(51, 78, 255)",
-        whiteSmoke: "rgb(235, 235, 235)",
-        snow: "rgb(250, 250, 250)",
-        davyGray: "rgb(102, 102, 102)",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          boulder: "#7B7B7B",
+          boulder50: "#F6F6F6",
+          boulder100: "#E7E7E7",
+          tan: "#111111",
+          boulder200: "#D1D1D1",
+          boulder300: "#B0B0B0",
+          boulder400: "#7B7B7B",
+          boulder500: "#6D6D6D",
+          boulder600: "#5D5D5D",
+          boulder700: "#4F4F4F",
+          boulder900: "#3D3D3D",
+          boulder950: "#262626",
+          madras: "#423306",
+          activeLink: "#0F2942",
+          inActiveLink: "#BDBDBD",
+          success: "#039855",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -124,12 +124,20 @@ const config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
       },
       animation: {

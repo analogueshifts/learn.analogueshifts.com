@@ -1,0 +1,36 @@
+{
+  "ready": [
+    {
+      "title": "Vetting System",
+      "href": "https://forms.analogueshifts.com",
+      "description": "Create forms and analyze results",
+      "image": "/our-apps/forms.svg"
+    },
+    {
+      "title": "DevOps Training",
+      "href": "https://learn.analogueshifts.com",
+      "description": "Join our DevOps training",
+      "image": "/our-apps/learn.svg"
+    },
+    {
+      "title": "Event System",
+      "href": "https://events.analogueshifts.com",
+      "description": "Create Events and share with guests",
+      "image": "/our-apps/events.svg"
+    }
+  ],
+  "comingSoon": [
+    {
+      "title": "Payment Gateway",
+      "href": "#",
+      "description": "Streamline payroll/bulk payments",
+      "image": "/our-apps/payment.svg"
+    },
+    {
+      "title": "Resume Builder",
+      "href": "#",
+      "description": "Build winning resumes",
+      "image": "/our-apps/resume.svg"
+    }
+  ]
+}
