@@ -27,11 +27,98 @@
     },
     "contents": [
       {
-        "title": "Module 1: DevOps Fundamentals  (WEEK 1)",
+        "title": "Lesson 1 (Week 1-2) - DevOps Fundamentals: Introduction to DevOps and its Importance.",
         "id": "content-one",
         "lessons": [
-          "Lesson 1:Introduction to DevOps and its Importance",
-          "Lesson 2: Setting up your environment"
+          "Introduction to DevOps and its Importance",
+          "Software Development Lifecycle in DevOps"
+        ]
+      },
+      {
+        "title": "Lesson 2 (Week 1-2): Introduction to Linux and useful commands for a DevOps Engineer: Setting up Prerequisites for Linux",
+        "id": "content-two",
+        "lessons": [
+          "Week 1-2: Introduction to Linux (file system, commands, permissions)",
+          "Week 3-4: Git fundamentals (version control, branching, merging)"
+        ]
+      },
+      {
+        "title": "Lesson 3(Week 3): Scripting and Software Lifecycle",
+        "id": "content-three",
+        "lessons": [
+          "Basics of Bash Scripting",
+          "Script Execution and Variables",
+          "Introduction to Data Serialization",
+          "Overview of YAML and JSON as Serialization Formats. Understanding JSON (JavaScript Object Notation)",
+          "YAML (YAML Ain't Markup Language) Fundamentals"
+        ]
+      },
+      {
+        "title": "Lesson 4 (Week 4): Source Code Management using git",
+        "id": "content-four",
+        "lessons": [
+          "Git Repositories and Version Control",
+          "Git Workflows and Collaboration",
+          "Using Git in IDE and Git Server Administration"
+        ]
+      },
+      {
+        "title": "Lesson 5 (Week5-8): CI/CD Pipeline with Jenkins, Maven, SonarQube, Nexus, Tomcat, and Nginx. Building and Deployment",
+        "id": "content-five",
+        "lessons": [
+          "Code Quality Analysis with SonarQube",
+          "Artifact Management with Nexus",
+          "Deployment through Tomcat and Loading with Nginx",
+          "Continuous Integration with Jenkins: Introduction to Continuous Integration",
+          "Introduction to Continuous Integration",
+          "Configuring and Customizing Jenkins",
+          "Jenkins Security and Monitoring",
+          "Automated Deployment and Jenkins Pipeline"
+        ]
+      },
+      {
+        "title": "Lesson 6 (Week9-10):Cloud Computing with AWS",
+        "id": "content-six",
+        "lessons": ["Cloud Computing with AWS"]
+      },
+      {
+        "title": "Lesson 7 (Week 11):Containerization with Docker",
+        "id": "content-seven",
+        "lessons": ["Containerization with Docker"]
+      },
+      {
+        "title": "Lesson 8 (Week 12 -16):Continuous Orchestration with Kubernetes",
+        "id": "content-eight",
+        "lessons": ["Kubernetes for Container Orchestration"]
+      },
+      {
+        "title": "Lesson 9 (Week 12 -16):Configuration Management with Ansible and Terraform",
+        "id": "content-nine",
+        "lessons": ["Configuration Management"]
+      },
+      {
+        "title": "Lesson 10 (Week 17):Monitoring and Infrastructure Automation using Prometheus and Grafana",
+        "id": "content-ten",
+        "lessons": ["Monitoring and Infrastructure Automation"]
+      },
+      {
+        "title": "Lesson 11 (Week 17):Collaboration and Communication Tools",
+        "id": "content-eleven",
+        "lessons": ["Collaboration and Communication Tools"]
+      },
+      {
+        "title": "Lesson 12 (Week 18-20):Final Course Review, resume preparation, interview Prep, and Assessment",
+        "id": "content-twelve",
+        "lessons": [
+          "Final Course Review and Recap",
+          "Crafting an Effective Resume",
+          "Building a Strong Online Presence",
+          "Effective Job Search Strategies",
+          "Interview Preparation and Techniques",
+          "Mock Interviews and Role Play",
+          "Technical Assessments and Coding Challenges",
+          "Soft Skills and Communication",
+          "Negotiating Job Offers and Compensation"
         ]
       }
     ],
@@ -71,5 +158,135 @@
         "lessons": ["Lesson 1: understanding MLops"]
       }
     ]
+  },
+  {
+    "courseName": "Data Engineering",
+    "name": "Data Engineering",
+    "description": "Dive deep into user-centric design methods and advanced prototyping tools.",
+    "price": "$600",
+    "company": "Jane Smith, Digital Training",
+    "duration": "6 hours",
+    "thumbnail": "/courses/data-engineering.svg",
+    "preview": "/courses/ml-preview.svg",
+    "headline": "Master Data Engineering:Exclusive Training",
+    "slug": "data-engineering",
+    "skillLevel": "Beginner",
+    "enrolledStudents": "6,234",
+    "whatToExpect": {
+      "summary": "Our collaborative team, alongside Data Engineering experts, has diligently designed this curriculum to ensure your readiness for employment upon program completion.",
+      "list": [
+        "Python for Data Engineering",
+        "SQL, and Linux/Bash Scripting",
+        "DevOps for Data Engineering",
+        "Azure Cloud for Data Engineering"
+      ]
+    },
+    "instructor": {
+      "image": "/courses/devops-instructor.svg",
+      "about": "With years of experience in Data Engineering, cloud architecture, and automation, I am a passionate advocate for scalable, resilient, and efficient infrastructure."
+    },
+    "contents": [
+      {
+        "title": "Week 1: Python for Data Engineering",
+        "id": "content-one",
+        "lessons": [
+          "Quick Wins with Python",
+          "Data Manipulation & Visualization",
+          "Automate Simple Tasks with Python"
+        ]
+      },
+      {
+        "title": "Week 2: SQL",
+        "id": "content-two",
+        "lessons": [
+          "Foundations of SQL",
+          "SQL for Data Transformation",
+          "Mini-Project: Build Your First SQL Portfolio"
+        ]
+      },
+      {
+        "title": "Week 3: Linux/Bash Scripting",
+        "id": "content-three",
+        "lessons": [
+          "Master Linux Basics",
+          "Write Bash Scripts for Data Tasks",
+          "Mini-Project: Automate a simple ETL pipeline using Bash (e.g., extract files from a folder, cleanthem, and move them to an organized directory)."
+        ]
+      },
+      {
+        "title": "Week 4: Data Engineering Basics",
+        "id": "content-four",
+        "lessons": [
+          "Introduction to Data Pipelines",
+          "Data Formats and Storage Systems",
+          "Mini-Project: Build an end-to-end pipeline to clean a dataset and load it into an SQLite database."
+        ]
+      },
+      {
+        "title": "Week 5: Big Data Tools",
+        "id": "content-five",
+        "lessons": [
+          "Apache Spark Introduction",
+          "Spark SQL for Big Data",
+          "Mini-Project: Process a large dataset using PySpark and generate a summary report."
+        ]
+      },
+      {
+        "title": "Week 6: Workflow Orchestration",
+        "id": "content-six",
+        "lessons": [
+          "Apache Airflow Basics",
+          "Advanced Airflow Features",
+          "Mini-Project: Build and deploy an Airflow pipeline that ingests API data and loads it into adatabase."
+        ]
+      },
+      {
+        "title": "Week 7: Data Modeling and Advanced SQL",
+        "id": "content-seven",
+        "lessons": [
+          "Dimensional Data Modeling",
+          "Advanced SQL Techniques",
+          "Mini-Project: Design a data warehouse schema and populate it with mock data."
+        ]
+      },
+      {
+        "title": "Week 8: Azure Cloud for Data Engineering",
+        "id": "content-eight",
+        "lessons": [
+          "Azure Data Storage and Processing",
+          "ETL with Azure Data Factory",
+          "Mini-Project: Build a cloud-based ETL pipeline using Azure Data Factory and Blob Storage."
+        ]
+      },
+      {
+        "title": "Week 9: Databricks for Big Data Analytics",
+        "id": "content-nine",
+        "lessons": [
+          "Introduction to Databricks",
+          "Mounting Azure Data Lake on Databricks",
+          "Analyzing Large Datasets",
+          "Mini-Project: Build an end-to-end data analysis solution"
+        ]
+      },
+      {
+        "title": "Week 10: DevOps for Data Engineering",
+        "id": "content-eleven",
+        "lessons": [
+          "CI/CD Pipelines",
+          "Docker for Data Engineering",
+          "Mini-Project: Build and deploy a containerized ETL pipeline with a CI/CD process."
+        ]
+      },
+      {
+        "title": "Week 11–12: Capstone Project",
+        "id": "content-ten",
+        "lessons": [
+          "Design an End-to-End Solution",
+          "Enhance with Streaming and Cloud",
+          "Portfolio Presentation: Document and present the solution as a portfolio project."
+        ]
+      }
+    ],
+    "review": "I recently completed this Data Engineering course and found it incredibly valuable. The content was well-structured, covering essential topics like data pipelines, ETL processes, SQL, and cloud technologies. The hands-on projects helped reinforce the concepts and gave me practical experience with tools like Apache Spark, Airflow, and BigQuery. I highly recommend this course to anyone looking to build a strong foundation in data engineering."
   }
 ]

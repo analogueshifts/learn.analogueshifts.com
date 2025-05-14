@@ -69,11 +69,16 @@ export default function Contents({ slug }: { slug: string }) {
           Course Content
         </h2>
         <div className="w-full h-px bg-[#E7E7E7] tablet:mb-4 mb-6" />
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion
+          defaultValue="content-one"
+          type="single"
+          collapsible
+          className="w-full"
+        >
           {course?.contents?.map((item) => {
             return (
               <AccordionItem key={item.id} value={item.id}>
-                <AccordionTrigger className="text-[#454545] large:text-xl tablet:text-base text-lg font-bold">
+                <AccordionTrigger className="text-[#454545] large:text-xl tablet:text-base text-lg font-bold text-start">
                   {item.title}
                 </AccordionTrigger>
                 <AccordionContent className="flex flex-col gap-4 pb-6">
