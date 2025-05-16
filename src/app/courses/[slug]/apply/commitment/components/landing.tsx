@@ -68,7 +68,7 @@ export default function Landing() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(allInformations),
+          body: new FormData(allInformations)
         }
       );
 
