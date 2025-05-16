@@ -50,7 +50,7 @@ export default function Landing() {
     return;
   }
 
-  const handleFormSubmit = (e: FormEvent) => {
+  const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const data = JSON.parse(existingData);
     const allInformations = {
@@ -59,11 +59,30 @@ export default function Landing() {
       ...data.personalInformation,
     };
 
-    console.log(allInformations);
+    try {
+    const response = await fetch(
+      "https://script.google.com/macros/s/AKfycbzVAIg8rYVDf95XvcOoHQJmTJ7um55zMU-Bom7JZ5ISGVEgqoIo1rK9beTF-4qvYAjz/exec",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(allInformations),
+      }
+    );
 
-    // Send All Information To Data
+    if (!response.ok) {
+      throw new Error("Failed to submit form data");
+    }
+
+    // Optional: log response from Google Script
+    const result = await response.json();
+    console.log("Submission Result:", result);
 
     router.push(`/courses/${slug}/apply/commitment`);
+  } catch (error) {
+    console.error("Submission error:", error);
+  }
   };
 
   return (
