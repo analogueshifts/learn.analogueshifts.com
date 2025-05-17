@@ -106,10 +106,10 @@ export default function ResponsiveNavBar({
               </>
             ) : (
               <>
-                <ResponsiveNavLink href="https://auth.analogueshifts.app?app=events">
+                <ResponsiveNavLink href="https://auth.analogueshifts.app?app=main">
                   Login
                 </ResponsiveNavLink>
-                <ResponsiveNavLink href="https://auth.analogueshifts.app?app=events">
+                <ResponsiveNavLink href="https://auth.analogueshifts.app?app=main">
                   Sign Up
                 </ResponsiveNavLink>
               </>
