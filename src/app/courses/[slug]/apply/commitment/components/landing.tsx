@@ -53,7 +53,6 @@ export default function Landing() {
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
     const data = JSON.parse(existingData);
     const allInformations = {
       ...data.background,
@@ -61,19 +60,13 @@ export default function Landing() {
       ...data.personalInformation,
     };
 
-    const formDataToSend = new FormData();
-    Object.entries(allInformations).forEach(([key, value]) => {
-      formDataToSend.append(key, value as string);
-    });
-
     setLoading(true);
-
     try {
       const response = await fetch(
-        'https://script.google.com/macros/s/AKfycbzVAIg8rYVDf95XvcOoHQJmTJ7um55zMU-Bom7JZ5ISGVEgqoIo1rK9beTF-4qvYAjz/exec',
+        'https://script.google.com/macros/s/AKfycbyTDFGfT2rNqQoKgOi3uN2iCWIlLWl1Y_M64UrkDC6qshdAmgbluHNxaxIzDvDvvGmP/exec',
         {
           method: 'POST',
-          body: formDataToSend,
+          body: JSON.stringify(allInformations),
         }
       );
 
