@@ -40,7 +40,6 @@ export const useAuth = () => {
   };
 
   const validateApp = async ({ appToken }: { appToken: string }) => {
-    let RedirectionLink = Cookies.get("RedirectionLink");
     try {
       const response = await axios.request({
         url: "/app/callback/" + appToken,
@@ -49,11 +48,11 @@ export const useAuth = () => {
       if (response.data?.success) {
         Cookies.set("analogueshifts", response.data?.data.token);
         notifyUser("success", "success", "right");
-        window.location.href = RedirectionLink || "/";
+        window.location.href = "/";
       }
     } catch (error: any) {
       notifyUser("error", error.messsage || "Invalid Request", "right");
-      router.push(RedirectionLink || "/");
+      router.push("/");
       console.log(error);
     }
   };
