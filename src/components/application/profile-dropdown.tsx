@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,7 +19,6 @@ export default function LoggedInProfileDropdown({
   const [isOpen, setIsOpen] = useState(false);
 
   const dropdownRef: any = useRef(null);
-  const router = useRouter();
 
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
@@ -87,23 +85,6 @@ export default function LoggedInProfileDropdown({
             animate={{ opacity: 1 }}
             className="our-apps-menu flex flex-col gap-6 large:gap-8 w-max absolute top-10 rounded-[18px] -right-10 bg-white py-9 large:py-10 large:px-14 px-12"
           >
-            <RenderMenu
-              item={{
-                title: "Manage Events",
-                description: "Overview of your events.",
-                image: "/profile/dashboard.svg",
-                action: () => router.push("/events"),
-              }}
-            />
-            <RenderMenu
-              item={{
-                title: "Create Event",
-                description: "Create a new event",
-                image: "/profile/hire.svg",
-                action: () => router.push("/events/create"),
-              }}
-            />
-
             <RenderMenu
               item={{
                 title: "Log Out",

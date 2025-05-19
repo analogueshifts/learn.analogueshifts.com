@@ -94,12 +94,6 @@ export default function ResponsiveNavBar({
             {/* Responsive Settings Options */}
             {user ? (
               <>
-                <ResponsiveNavLink href="/events">
-                  Manage events
-                </ResponsiveNavLink>
-                <ResponsiveNavLink href="/events/create">
-                  Create event
-                </ResponsiveNavLink>
                 <ResponsiveNavLink onClick={handleLogout} href="">
                   Logout
                 </ResponsiveNavLink>
