@@ -5,6 +5,8 @@ import "./globals.css";
 import { UserProvider } from "@/contexts/user";
 import { ToastProvider } from "@/contexts/toast";
 import ToastMessage from "@/components/application/toast";
+import { SessionProvider } from "@/components/providers/session-provider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700"],
@@ -60,12 +62,14 @@ export default function RootLayout({
           "overflow-x-hidden w-full max-w-full"
         )}
       >
-        <UserProvider>
-          <ToastProvider>
-            <ToastMessage />
-            {children}
-          </ToastProvider>
-        </UserProvider>
+        <SessionProvider>
+          <UserProvider>
+            <ToastProvider>
+              <ToastMessage />
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </ToastProvider>
+          </UserProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -103,10 +103,10 @@ export default function ResponsiveNavBar({
               </>
             ) : (
               <>
-                <ResponsiveNavLink href={`${authLink}?app=${app}`}>
+                <ResponsiveNavLink href="/login">
                   Login
                 </ResponsiveNavLink>
-                <ResponsiveNavLink href={`${authLink}?app=${app}`}>
+                <ResponsiveNavLink href="/register">
                   Sign Up
                 </ResponsiveNavLink>
               </>

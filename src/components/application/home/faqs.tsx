@@ -1,8 +1,10 @@
 "use client";
 
 import data from "../utilities/faqs.json";
-import SectionMessage from "./section-message";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, BookOpen } from "lucide-react";
+import Link from "next/link";
 
 import {
   Accordion,
@@ -13,87 +15,80 @@ import {
 
 export default function FAQ() {
   const router = useRouter();
+  
+  // Combine the nested arrays if needed
+  const flatData = Array.isArray(data[0]) ? data.flat() : data;
 
   return (
-    <section className="w-full max-w-[1650px] mx-auto large:px-[148px] px-[120px] tablet:px-6 large:pb-[134px] pb-[104px] tablet:pb-[84px] flex flex-col items-center">
-      <h2 className="text-center mb-5 font-semibold text-2xl tablet:text-lg large:text-32 text-black">
-        FAQ
-      </h2>
-      <p className="text-[#7C7C7C] large:max-w-[653px] max-w-[543px] mb-12 large:mb-16 tablet:text-sm text-base large:text-xl text-center font-normal">
-        Find answers to common questions about our platform and the waitlist
-        process.
-      </p>
-      <div className="w-full grid grid-cols-2 large:mb-20 tablet:grid-cols-1 items-start gap-y-[30px] gap-x-[30px] mb-[60px]">
-        {data?.map((acc: any, i: number) => {
-          return (
-            <Accordion
-              type="single"
-              key={i}
-              className="col-span-1  flex flex-col gap-[30px] "
-              collapsible
+    <section className="w-full bg-background-whisperGray py-16 lg:py-20 px-6 lg:px-24">
+      <div className="max-w-[1500px] mx-auto flex flex-col lg:flex-row gap-16 lg:gap-24 items-stretch">
+        
+        {/* Left Column: Heading Top, Contact Card Bottom */}
+        <motion.div 
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="w-full lg:w-[35%] flex flex-col justify-between"
+        >
+          <div>
+            <div className="w-10 h-10 bg-background-darkYellow/10 text-background-darkYellow rounded-xl flex items-center justify-center mb-4 shadow-sm border border-background-darkYellow/20">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-primary-tan mb-3 leading-[1.2] tracking-tight">
+              Frequently Asked <br className="hidden lg:block" />
+              <span className="text-background-darkYellow">Questions</span>
+            </h2>
+            
+            <p className="text-sm text-content-grayText font-medium leading-relaxed max-w-sm">
+              Find everything you need to know about our platform, courses, and how we can help you achieve your career goals.
+            </p>
+          </div>
+          
+          {/* Compact Contact Card pushed exactly to the bottom */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.06)] w-full max-w-sm mt-8">
+            <h3 className="font-bold text-base text-primary-tan mb-1">Still have questions?</h3>
+            <p className="text-content-grayText text-xs mb-4 font-medium">
+              Can't find the answer you're looking for? Please chat to our friendly team.
+            </p>
+            <Link 
+              href="https://www.analogueshifts.com/contact"
+              className="flex w-full items-center justify-center gap-2 bg-primary-tan hover:bg-gray-900 text-white h-11 rounded-xl font-bold transition-all shadow-sm hover:shadow-md text-sm"
             >
-              {acc?.map((item: any, index: number) => {
-                return (
-                  <AccordionItem
-                    key={index}
-                    value={String(index)}
-                    className="accordion-dropshadow px-8 rounded-[10px] border border-[#FFBB0A3D] bg-white"
-                  >
-                    <AccordionTrigger className="items-start py-0">
-                      <div className="w-full h-[100px] tablet:h-max tablet:py-6 flex gap-[30px] items-center">
-                        <span className="icon w-[30px] duration-500 h-[30px] tablet:w-5 tablet:h-5 relative flex justify-center items-center">
-                          <p
-                            className={`w-full plus h-[5px] opacity-100 tablet:h-[3px] rounded-[20px] bg-[#14051B] duration-500  `}
-                          ></p>
-                          <p
-                            className={`bg-[#14051B] minus rotate-0 duration-500 h-[30px] tablet:h-5 tablet:w-[3px] absolute top-0 left-[50%] w-[5px] rounded-[20px] -translate-x-[50%] `}
-                          ></p>
-                        </span>{" "}
-                        <h3 className="font-semibold text-[#14051B] large:text-xl text-lg text-start tablet:text-sm">
-                          {item.question}
-                        </h3>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="w-full">
-                      <div className="tablet:h-max h-[130px] tablet:pb-6 w-full overflow-hidden pr-[32px] pl-[60px]">
-                        <p className="line-clamp-3 large:leading-8 leading-7 tablet:leading-5 text-[#575757] font-normal large:text-base text-[15px] tablet:text-[13px]">
-                          {item.answer}
-                        </p>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          );
-        })}
-      </div>
+              Get in touch
+            </Link>
+          </div>
+        </motion.div>
 
-      <div className="w-full">
-        {" "}
-        <SectionMessage
-          action={() => {
-            router.push("https://www.analogueshifts.com/contact");
-          }}
-          title="Still have questions?"
-          highlighted=""
-          buttonChildren={
-            <>
-              <div className="flex-col flex overflow-hidden relative h-4">
-                {" "}
-                <span className="h-5 leading-4 overflow-hidden duration-300">
-                  {" "}
-                  Contact Us
-                </span>{" "}
-                <span className="h-5 leading-4 overflow-hidden absolute translate-y-4 duration-300">
-                  {" "}
-                  Contact Us
-                </span>
-              </div>
-            </>
-          }
-          description="Contact our support team for further assistance."
-        />
+        {/* Right Column: Floating Accordion Cards */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full lg:w-[65%]"
+        >
+          <Accordion type="single" collapsible className="w-full flex flex-col gap-4">
+            {flatData.map((item: any, index: number) => (
+              <AccordionItem 
+                key={index} 
+                value={`item-${index}`}
+                className="bg-white border border-gray-100 rounded-[20px] px-6 lg:px-8 py-2 shadow-sm data-[state=open]:border-background-darkYellow/50 data-[state=open]:shadow-md transition-all duration-300"
+              >
+                <AccordionTrigger className="hover:no-underline py-6 group">
+                  <span className="text-left font-bold text-lg lg:text-xl text-primary-tan group-hover:text-background-darkYellow transition-colors pr-8 leading-snug">
+                    {item.question}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="text-base text-content-grayText leading-relaxed pb-6 font-medium">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </motion.div>
+
       </div>
     </section>
   );
