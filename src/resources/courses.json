@@ -28,7 +28,40 @@
         "description": "Learn the basics",
         "totalVideo": 4,
         "totalVideoLength": "45min",
-        "lessons": ["What is Mobile Development?", "Setting up your environment", "Understanding UI Layouts", "Your first Hello World app"]
+        "lessons": [
+          { "title": "What is Mobile Development?", "type": "video", "duration": "08:15" },
+          { 
+            "title": "Setting up your environment", 
+            "type": "article", 
+            "duration": "15:00",
+            "description": "<h2>Environment Setup Guide</h2><p>Before we dive into writing code, it's <strong>crucial</strong> that you install the correct tooling.</p><ul><li>Install Node.js (v18+)</li><li>Install Android Studio</li><li>Install Xcode (Mac users only)</li></ul><p>Run <code>npm install -g expo-cli</code> once you are done!</p>"
+          },
+          { "title": "Understanding UI Layouts", "type": "video", "duration": "12:30" },
+          { 
+            "title": "Your first Hello World app", 
+            "type": "assignment", 
+            "duration": "00:00",
+            "description": "<h3>Project Assignment</h3><p>Your task is to build a basic Hello World application with the following requirements:</p><ol><li>Must run on both iOS and Android simulators</li><li>Must have a blue background and white centered text</li><li>Must use Flexbox for positioning</li></ol><p><em>Submit your GitHub repository link when complete.</em></p>"
+          },
+          { 
+            "title": "Knowledge Check: Basics", 
+            "type": "quiz", 
+            "duration": "00:00",
+            "description": "<p><strong>Quiz Instructions:</strong></p><p>This is a 5-question multiple choice quiz testing your understanding of React Native core concepts. You must score at least 80% to pass.</p>",
+            "questions": [
+              {
+                "question": "Which of the following is used to build native mobile apps using JavaScript?",
+                "options": ["React DOM", "React Native", "Vue.js", "Angular"],
+                "correctIndex": 1
+              },
+              {
+                "question": "What is the core building block of a React Native application?",
+                "options": ["Modules", "Widgets", "Components", "Templates"],
+                "correctIndex": 2
+              }
+            ]
+          }
+        ]
       },
       {
         "id": "content-two",
@@ -73,7 +106,13 @@
         "description": "Start your journey",
         "totalVideo": 5,
         "totalVideoLength": "1 hour 15min",
-        "lessons": ["How the web works", "HTML5 Semantic Elements", "CSS Grid & Flexbox", "Responsive Design Principles", "Building your first landing page"]
+        "lessons": [
+          { "title": "How the web works", "type": "video", "duration": "10:05" },
+          { "title": "HTML5 Semantic Elements", "type": "article", "duration": "12:00" },
+          { "title": "CSS Grid & Flexbox", "type": "video", "duration": "25:30" },
+          { "title": "Responsive Design Principles", "type": "video", "duration": "18:45" },
+          { "title": "Building your first landing page", "type": "assignment", "duration": "00:00" }
+        ]
       },
       {
         "id": "web-mod-2",

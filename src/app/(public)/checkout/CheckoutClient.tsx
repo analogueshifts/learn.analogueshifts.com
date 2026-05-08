@@ -147,7 +147,7 @@ export default function CheckoutClient() {
             <div className="flex justify-between items-end mb-10">
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-gray-500 mb-1">Amount Payable</span>
-                <span className="text-4xl font-extrabold text-gray-900 tracking-tight leading-none">${total.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-gray-900 tracking-tight leading-none">${total.toFixed(2)}</span>
               </div>
             </div>
 

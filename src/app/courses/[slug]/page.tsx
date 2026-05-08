@@ -1,6 +1,6 @@
 import GuestLayout from "@/components/application/layouts/guest";
 import coursesData from "@/resources/courses.json";
-import { Star, Check, Lock, PlayCircle, Clock, Users, GraduationCap, Globe } from "lucide-react";
+import { Star, Check, Lock, PlayCircle, Clock, Users, GraduationCap, Globe, Eye } from "lucide-react";
 import SmartBackButton from "@/components/application/courses/smart-back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,13 +11,14 @@ import CountdownTimer from "@/components/application/courses/countdown-timer";
 import CourseActionButtons from "@/components/application/courses/CourseActionButtons";
 import Image from "next/image";
 import HeroSvg from "@/assets/images/home/hero.svg";
+import { notFound } from "next/navigation";
 
 export default function CourseDetailPage({ 
   params,
   searchParams 
 }: { 
   params: { slug: string },
-  searchParams: { from?: string }
+  searchParams: { from?: string, mode?: string }
 }) {
   const course = coursesData.find((c) => c.slug === params.slug);
 
@@ -25,10 +26,19 @@ export default function CourseDetailPage({
     notFound();
   }
 
+  const isPreview = searchParams.mode === 'preview';
 
 
-  // Sample video URL for preview (replace with actual if available)
-  const previewVideoUrl = "https://files.vidstack.io/sprite-fight/720p.mp4";
+
+  // Extract the Course Introduction video from Section 1, Lesson 1
+  const firstModule = course.contents?.[0];
+  const firstLessonItem = firstModule?.lessons?.[0];
+  const firstLesson = typeof firstLessonItem === 'string' 
+    ? { url: "https://files.vidstack.io/sprite-fight/720p.mp4", title: firstLessonItem }
+    : firstLessonItem;
+
+  const previewVideoUrl = firstLesson?.url || "https://files.vidstack.io/sprite-fight/720p.mp4";
+  const previewVideoTitle = firstLesson?.title || `${course.name} Preview`;
 
   return (
     <GuestLayout>
@@ -36,13 +46,21 @@ export default function CourseDetailPage({
       <div className="bg-primary-tan text-white pt-24 pb-32 px-6 lg:px-24">
         <div className="max-w-[1800px] mx-auto mb-8">
           <SmartBackButton 
-            fallbackHref="/courses" 
-            fallbackText="Back to Courses" 
+            fallbackHref={isPreview ? "/trainer/courses" : "/courses"} 
+            fallbackText={isPreview ? "Back to Dashboard" : "Back to Courses"} 
             className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+            forceFallback={isPreview}
           />
         </div>
         <div className="max-w-[1800px] mx-auto flex flex-col lg:flex-row gap-12 lg:gap-20">
           <div className="flex-1">
+            {isPreview && (
+              <div className="mb-8 bg-background-darkYellow/20 border border-background-darkYellow/50 text-white px-4 py-3 rounded-lg flex items-start sm:items-center gap-3">
+                <Eye className="w-5 h-5 text-background-darkYellow shrink-0 mt-0.5 sm:mt-0" />
+                <span className="font-medium text-sm">You are currently viewing this course in <strong className="text-background-darkYellow">Trainer Preview Mode</strong>. Enrollment is disabled.</span>
+              </div>
+            )}
+            
             <div className="flex items-center gap-2 text-sm font-medium text-background-darkYellow mb-6">
               <span className="uppercase tracking-wider">{course.company}</span>
               <span>•</span>
@@ -101,19 +119,27 @@ export default function CourseDetailPage({
                 <div className="w-full aspect-video rounded-xl overflow-hidden bg-black relative">
                   <VideoPlayer 
                     src={previewVideoUrl} 
-                    title={`${course.name} Preview`} 
+                    title={previewVideoTitle} 
                     courseId={course.slug} 
                     lessonId="preview"
                     poster={course.preview || course.thumbnail} 
+                    autoPlay={true}
                   />
                 </div>
                 <CardContent className="p-8">
                   <div className="mb-6">
                     <div className="text-4xl font-bold text-primary-tan">{course.price}</div>
-                    <CountdownTimer hours={48} />
+                    {!isPreview && <CountdownTimer hours={48} />}
                   </div>
                   
-                  <CourseActionButtons course={course} />
+                  {isPreview ? (
+                    <Button className="w-full bg-gray-100 text-gray-400 font-bold h-12 rounded-xl mb-4" disabled>
+                      Trainer Preview Mode
+                    </Button>
+                  ) : (
+                    <CourseActionButtons course={course} />
+                  )}
+                  
                   <p className="text-center text-sm text-gray-500 mb-6">30-Day Money-Back Guarantee</p>
                   
                   <div className="space-y-4">
@@ -354,7 +380,13 @@ export default function CourseDetailPage({
             <p className="text-lg text-content-grayText mb-8 max-w-lg">
               Join thousands of students who have already transformed their careers through our expertly crafted curriculum. Don&apos;t wait to achieve your goals!
             </p>
-            <CourseActionButtons course={course} variant="bottom" />
+            {isPreview ? (
+              <Button className="bg-gray-200 text-gray-500 font-bold h-12 px-8 rounded-xl shadow-sm" disabled>
+                Enrollment Disabled (Preview)
+              </Button>
+            ) : (
+              <CourseActionButtons course={course} variant="bottom" />
+            )}
           </div>
           
           <div className="w-full lg:w-1/2 relative flex justify-center lg:justify-end">
