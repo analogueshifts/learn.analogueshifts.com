@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { CheckCircle2, ShieldCheck, Trash2, Lock } from "lucide-react";
 import GatewaySelector, { PaymentGateway } from "@/components/application/checkout/GatewaySelector";
 import CouponInput from "@/components/application/checkout/CouponInput";
-import PaystackButton from "@/components/application/checkout/PaystackButton";
-import FlutterwaveButton from "@/components/application/checkout/FlutterwaveButton";
 import { useCartStore } from "@/store/useCartStore";
+import dynamic from "next/dynamic";
+
+const PaystackButton = dynamic(() => import("@/components/application/checkout/PaystackButton"), { ssr: false });
+const FlutterwaveButton = dynamic(() => import("@/components/application/checkout/FlutterwaveButton"), { ssr: false });
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -40,7 +42,13 @@ export default function CheckoutClient() {
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price, 0);
   const discountAmount = (subtotal * discount) / 100;
-  const total = subtotal - discountAmount;
+  const subtotalAfterDiscount = subtotal - discountAmount;
+  
+  // Standard VAT rate (5.5%)
+  const vatRate = 0.055;
+  const vatAmount = subtotalAfterDiscount * vatRate;
+  
+  const total = subtotalAfterDiscount + vatAmount;
   // Convert total to minor units (cents/kobo)
   const minorTotal = Math.round(total * 100);
 
@@ -129,8 +137,8 @@ export default function CheckoutClient() {
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 font-medium">Taxes</span>
-                <span className="font-bold text-gray-900">Calculated at next step</span>
+                <span className="text-gray-500 font-medium">VAT (5.5%)</span>
+                <span className="font-bold text-gray-900">${vatAmount.toFixed(2)}</span>
               </div>
             </div>
 

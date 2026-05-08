@@ -1,41 +1,51 @@
 "use client";
 
-import { useQueryState } from "nuqs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 const FILTER_OPTIONS = {
-  categories: ["Web Development", "DevOps", "Data Science", "Machine Learning", "Design"],
-  levels: ["Beginner", "Intermediate", "Advanced", "All Levels"],
+  categories: ["Web Development", "Mobile Development", "Backend Engineering", "UI/UX Design", "Data Science", "DevOps", "Marketing", "Copywriting"],
+  levels: ["Beginner", "Intermediate", "Advanced", "Expert"],
   prices: ["Free", "Paid"],
   languages: ["English", "Spanish", "French"]
 };
 
-export default function CourseFilters() {
-  const [category, setCategory] = useQueryState("category");
-  const [level, setLevel] = useQueryState("level");
-  const [price, setPrice] = useQueryState("price");
-  const [language, setLanguage] = useQueryState("language");
+interface CourseFiltersProps {
+  categoryFilter: string[];
+  setCategoryFilter: (val: string[]) => void;
+  levelFilter: string[];
+  setLevelFilter: (val: string[]) => void;
+  priceFilter: string[];
+  setPriceFilter: (val: string[]) => void;
+  languageFilter: string[];
+  setLanguageFilter: (val: string[]) => void;
+}
+
+export default function CourseFilters({
+  categoryFilter, setCategoryFilter,
+  levelFilter, setLevelFilter,
+  priceFilter, setPriceFilter,
+  languageFilter, setLanguageFilter
+}: CourseFiltersProps) {
 
   const handleFilter = (
-    currentValue: string | null, 
-    setValue: (val: string | null) => void, 
+    currentValues: string[], 
+    setValue: (val: string[]) => void, 
     option: string, 
     checked: boolean
   ) => {
-    let newValues = currentValue ? currentValue.split(",") : [];
+    let newValues = [...currentValues];
     if (checked) {
       newValues.push(option);
     } else {
       newValues = newValues.filter((v) => v !== option);
     }
-    setValue(newValues.length > 0 ? newValues.join(",") : null);
+    setValue(newValues);
   };
 
-  const isChecked = (currentValue: string | null, option: string) => {
-    if (!currentValue) return false;
-    return currentValue.split(",").includes(option);
+  const isChecked = (currentValues: string[], option: string) => {
+    return currentValues.includes(option);
   };
 
   return (
@@ -51,8 +61,8 @@ export default function CourseFilters() {
                 <div key={cat} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`cat-${cat}`} 
-                    checked={isChecked(category, cat)}
-                    onCheckedChange={(checked) => handleFilter(category, setCategory, cat, checked as boolean)}
+                    checked={isChecked(categoryFilter, cat)}
+                    onCheckedChange={(checked) => handleFilter(categoryFilter, setCategoryFilter, cat, checked as boolean)}
                   />
                   <Label htmlFor={`cat-${cat}`} className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {cat}
@@ -71,8 +81,8 @@ export default function CourseFilters() {
                 <div key={lvl} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`lvl-${lvl}`} 
-                    checked={isChecked(level, lvl)}
-                    onCheckedChange={(checked) => handleFilter(level, setLevel, lvl, checked as boolean)}
+                    checked={isChecked(levelFilter, lvl)}
+                    onCheckedChange={(checked) => handleFilter(levelFilter, setLevelFilter, lvl, checked as boolean)}
                   />
                   <Label htmlFor={`lvl-${lvl}`} className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {lvl}
@@ -91,8 +101,8 @@ export default function CourseFilters() {
                 <div key={p} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`price-${p}`} 
-                    checked={isChecked(price, p)}
-                    onCheckedChange={(checked) => handleFilter(price, setPrice, p, checked as boolean)}
+                    checked={isChecked(priceFilter, p)}
+                    onCheckedChange={(checked) => handleFilter(priceFilter, setPriceFilter, p, checked as boolean)}
                   />
                   <Label htmlFor={`price-${p}`} className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {p}
@@ -111,8 +121,8 @@ export default function CourseFilters() {
                 <div key={lang} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`lang-${lang}`} 
-                    checked={isChecked(language, lang)}
-                    onCheckedChange={(checked) => handleFilter(language, setLanguage, lang, checked as boolean)}
+                    checked={isChecked(languageFilter, lang)}
+                    onCheckedChange={(checked) => handleFilter(languageFilter, setLanguageFilter, lang, checked as boolean)}
                   />
                   <Label htmlFor={`lang-${lang}`} className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {lang}

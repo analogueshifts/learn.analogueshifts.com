@@ -20,6 +20,7 @@ const carouselItems = [...coursesData, ...coursesData, ...coursesData].slice(0, 
   rating: 4.8,
   students: c.enrolledStudents || "1,200",
   image: c.thumbnail || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?q=80&w=800&auto=format&fit=crop",
+  duration: c.duration || "Self Paced",
   uniqueKey: `${c.slug}-${index}`
 }));
 
@@ -102,6 +103,9 @@ export default function FeaturedCarousel() {
                         <p className="text-xs text-content-grayText font-medium mb-3">{course.instructor}</p>
                         <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                           <span className="font-bold text-lg text-primary-tan">{course.price}</span>
+                          <span className="text-xs font-medium bg-background-darkYellow/10 text-background-darkYellow px-2.5 py-1 rounded-md">
+                            {course.duration}
+                          </span>
                         </div>
                       </div>
                     </CardContent>

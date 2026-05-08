@@ -21,16 +21,22 @@ export default function GatewaySelector({ selected, onSelect, disabled }: Gatewa
         disabled={disabled}
         className="grid grid-cols-1 sm:grid-cols-2 gap-4"
       >
-        <div className={`relative flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all border ${selected === "paystack" ? "border-background-darkYellow bg-[#FFFBEC] ring-1 ring-background-darkYellow/20" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}>
-          <RadioGroupItem value="paystack" id="paystack" />
+        <div 
+          onClick={() => onSelect("paystack")}
+          className={`relative flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all border ${selected === "paystack" ? "border-background-darkYellow bg-[#FFFBEC] ring-1 ring-background-darkYellow/20" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}
+        >
+          <RadioGroupItem value="paystack" id="paystack" className="pointer-events-none" />
           <div className="flex-1">
             <Label htmlFor="paystack" className="cursor-pointer font-bold text-gray-900 text-base block mb-0.5">Paystack</Label>
             <span className="text-sm text-gray-500 block font-normal">Pay with cards, bank transfers, or USSD.</span>
           </div>
         </div>
 
-        <div className={`relative flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all border ${selected === "flutterwave" ? "border-background-darkYellow bg-[#FFFBEC] ring-1 ring-background-darkYellow/20" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}>
-          <RadioGroupItem value="flutterwave" id="flutterwave" />
+        <div 
+          onClick={() => onSelect("flutterwave")}
+          className={`relative flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all border ${selected === "flutterwave" ? "border-background-darkYellow bg-[#FFFBEC] ring-1 ring-background-darkYellow/20" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}
+        >
+          <RadioGroupItem value="flutterwave" id="flutterwave" className="pointer-events-none" />
           <div className="flex-1">
             <Label htmlFor="flutterwave" className="cursor-pointer font-bold text-gray-900 text-base block mb-0.5">Flutterwave</Label>
             <span className="text-sm text-gray-500 block font-normal">Secure payment via mobile money or card.</span>
