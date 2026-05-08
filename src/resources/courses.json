@@ -26,9 +26,25 @@
         "id": "content-one",
         "title": "Introduction to Mobile Dev",
         "description": "Learn the basics",
+        "totalVideo": 4,
+        "totalVideoLength": "45min",
+        "lessons": ["What is Mobile Development?", "Setting up your environment", "Understanding UI Layouts", "Your first Hello World app"]
+      },
+      {
+        "id": "content-two",
+        "title": "React Native Fundamentals",
+        "description": "Deep dive into React Native",
         "totalVideo": 5,
-        "totalVideoLength": "2 hours",
-        "lessons": ["What is Mobile Development?", "Setting up your environment"]
+        "totalVideoLength": "1 hour 20min",
+        "lessons": ["Components and Props", "State Management basics", "Navigation with React Navigation", "Styling in React Native", "Working with APIs"]
+      },
+      {
+        "id": "content-three",
+        "title": "Flutter Basics",
+        "description": "Intro to Flutter and Dart",
+        "totalVideo": 4,
+        "totalVideoLength": "55min",
+        "lessons": ["Dart Crash Course", "Widgets 101", "Building a layout in Flutter", "Handling user input"]
       }
     ],
     "review": "This is an amazing course! Highly recommended."
@@ -50,7 +66,32 @@
       "image": "/courses/devops-instructor.svg",
       "about": "Senior Frontend Engineer with a passion for beautiful UI and scalable architecture."
     },
-    "contents": []
+    "contents": [
+      {
+        "id": "web-mod-1",
+        "title": "HTML, CSS & Modern Web Design",
+        "description": "Start your journey",
+        "totalVideo": 5,
+        "totalVideoLength": "1 hour 15min",
+        "lessons": ["How the web works", "HTML5 Semantic Elements", "CSS Grid & Flexbox", "Responsive Design Principles", "Building your first landing page"]
+      },
+      {
+        "id": "web-mod-2",
+        "title": "JavaScript Essentials",
+        "description": "Master JS",
+        "totalVideo": 5,
+        "totalVideoLength": "2 hours 10min",
+        "lessons": ["Variables and Data Types", "Functions and Arrow Functions", "Array Methods (map, filter, reduce)", "Asynchronous JS & Promises", "DOM Manipulation"]
+      },
+      {
+        "id": "web-mod-3",
+        "title": "React & Next.js",
+        "description": "Building modern apps",
+        "totalVideo": 5,
+        "totalVideoLength": "3 hours",
+        "lessons": ["Introduction to React", "Hooks: useState and useEffect", "Routing with Next.js", "Server Components vs Client", "Deploying to Vercel"]
+      }
+    ]
   },
   {
     "courseName": "Backend Engineering",
@@ -69,7 +110,32 @@
       "image": "/courses/devops-instructor.svg",
       "about": "Principal Backend Architect specializing in high-load distributed systems."
     },
-    "contents": []
+    "contents": [
+      {
+        "id": "backend-mod-1",
+        "title": "Introduction to Backend Systems",
+        "description": "Foundations",
+        "totalVideo": 4,
+        "totalVideoLength": "1 hour",
+        "lessons": ["Client-Server Architecture", "RESTful API Design", "Understanding HTTP Methods", "JSON and Data Serialization"]
+      },
+      {
+        "id": "backend-mod-2",
+        "title": "Databases & ORMs",
+        "description": "Data storage",
+        "totalVideo": 5,
+        "totalVideoLength": "2 hours 15min",
+        "lessons": ["SQL vs NoSQL", "PostgreSQL Basics", "Designing a Relational Schema", "Introduction to Prisma ORM", "Writing Complex Queries"]
+      },
+      {
+        "id": "backend-mod-3",
+        "title": "Security & Authentication",
+        "description": "Securing your APIs",
+        "totalVideo": 5,
+        "totalVideoLength": "1 hour 45min",
+        "lessons": ["Authentication vs Authorization", "JWTs explained", "Implementing OAuth", "Hashing passwords with bcrypt", "Rate Limiting and Best Practices"]
+      }
+    ]
   },
   {
     "courseName": "Marketing",

@@ -11,6 +11,7 @@ import ResponsiveNavBar from "./responsive-navbar";
 import LoggedInProfileDropdown from "./profile-dropdown";
 
 import NavLogo from "@/assets/images/nav-logo.svg";
+import CartDropdown from "./CartDropdown";
 
 const GuestNavigation = ({ user, handleLogout }: any) => {
   const pathname = usePathname();
@@ -74,11 +75,13 @@ const GuestNavigation = ({ user, handleLogout }: any) => {
         </div>
 
         {/* Settings Dropdown */}
-        {user ? (
-          <LoggedInProfileDropdown handleLogout={handleLogout} user={user} />
-        ) : (
-          <div className="hidden lg:flex lg:items-center gap-6">
-            <NavLink active={false} href="/login">
+        <div className="hidden lg:flex lg:items-center gap-6">
+          <CartDropdown />
+          {user ? (
+            <LoggedInProfileDropdown handleLogout={handleLogout} user={user} />
+          ) : (
+            <>
+              <NavLink active={false} href="/login">
               Login
             </NavLink>
             <Link
@@ -87,11 +90,13 @@ const GuestNavigation = ({ user, handleLogout }: any) => {
             >
               Sign Up
             </Link>
-          </div>
+          </>
         )}
+        </div>
 
         {/* Hamburger */}
-        <div className="flex items-center lg:hidden">
+        <div className="flex items-center gap-4 lg:hidden">
+          <CartDropdown />
           <button
             onClick={() => setOpen((prev) => !prev)}
             className="w-[18px] flex flex-col gap-1.5 bg-transparent border-none outline-none"
