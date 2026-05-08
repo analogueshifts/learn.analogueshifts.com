@@ -22,7 +22,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative w-full pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden flex flex-col items-center justify-center min-h-[60vh]">
+    <section className="relative w-full pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden flex flex-col items-center justify-center min-h-[75vh]">
       
       {/* Background Carousel */}
       <div className="absolute inset-0 z-0">
@@ -51,15 +51,7 @@ export default function Hero() {
       
       <div className="container relative z-10 px-6 lg:px-12 mx-auto max-w-5xl flex flex-col items-center text-center">
         
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="inline-flex items-center rounded-full border border-background-darkYellow/50 px-5 py-2 text-sm font-bold text-background-darkYellow mb-8 bg-black/30 backdrop-blur-md shadow-sm"
-        >
-          <span className="flex h-2 w-2 rounded-full bg-background-darkYellow mr-3 animate-pulse"></span>
-          Over 5,000+ Premium Courses Available
-        </motion.div>
+
         
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
