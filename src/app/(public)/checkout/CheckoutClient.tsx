@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 export default function CheckoutClient() {
   const [gateway, setGateway] = useState<PaymentGateway>("paystack");
   const [discount, setDiscount] = useState(0);
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
   const cartItems = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
   const [mounted, setMounted] = useState(false);
@@ -22,6 +23,27 @@ export default function CheckoutClient() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handlePaymentSuccess = () => {
+    if (appliedCouponCode) {
+      const usedCoupons = JSON.parse(localStorage.getItem("usedCoupons") || "[]");
+      if (!usedCoupons.includes(appliedCouponCode)) {
+        usedCoupons.push(appliedCouponCode);
+        localStorage.setItem("usedCoupons", JSON.stringify(usedCoupons));
+      }
+      
+      const platformCoupons = JSON.parse(localStorage.getItem("platformCoupons") || "[]");
+      if (platformCoupons.length > 0) {
+        const updatedPlatformCoupons = platformCoupons.map((c: any) => {
+          if (c.code === appliedCouponCode) {
+            return { ...c, currentUses: (c.currentUses || 0) + 1 };
+          }
+          return c;
+        });
+        localStorage.setItem("platformCoupons", JSON.stringify(updatedPlatformCoupons));
+      }
+    }
+  };
 
   if (!mounted) return null;
 
@@ -73,8 +95,8 @@ export default function CheckoutClient() {
             </div>
             
             <div className="max-w-md">
-              {gateway === "paystack" && <PaystackButton email="student@example.com" amount={minorTotal} />}
-              {gateway === "flutterwave" && <FlutterwaveButton email="student@example.com" name="Jane Doe" amount={total} />}
+              {gateway === "paystack" && <PaystackButton email="student@example.com" amount={minorTotal} onSuccess={handlePaymentSuccess} />}
+              {gateway === "flutterwave" && <FlutterwaveButton email="student@example.com" name="Jane Doe" amount={total} onSuccess={handlePaymentSuccess} />}
             </div>
             
             <div className="flex items-center gap-2 text-sm font-medium text-gray-400 pt-4">
@@ -152,7 +174,10 @@ export default function CheckoutClient() {
             </div>
 
             <div className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100/80 shadow-inner">
-              <CouponInput onValidated={(val) => setDiscount(val)} />
+              <CouponInput onValidated={(val, code) => {
+                setDiscount(val);
+                setAppliedCouponCode(code);
+              }} />
             </div>
           </div>
         </div>

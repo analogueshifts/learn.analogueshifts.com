@@ -12,9 +12,10 @@ interface FlutterwaveButtonProps {
   name: string;
   amount: number;
   disabled?: boolean;
+  onSuccess?: () => void;
 }
 
-export default function FlutterwaveButton({ email, name, amount, disabled }: FlutterwaveButtonProps) {
+export default function FlutterwaveButton({ email, name, amount, disabled, onSuccess }: FlutterwaveButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
@@ -45,6 +46,7 @@ export default function FlutterwaveButton({ email, name, amount, disabled }: Flu
         setIsProcessing(true);
         if (response.status === "successful") {
           toast.success("Payment successful! Verifying...");
+          if (onSuccess) onSuccess();
           setTimeout(() => {
             router.push(`/checkout/success?ref=${response.tx_ref}`);
           }, 1500);

@@ -1,69 +1,70 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Video, 
-  BarChart, 
-  DollarSign, 
+import React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  LayoutDashboard,
+  BookOpen,
+  Award,
+  Calendar,
+  Settings,
   Home,
   LogOut,
-  Menu,
-  X,
-  User,
-  Search,
   Bell,
-  MessageSquare,
-  Settings
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import NavLogo from "@/assets/images/nav-logo.svg";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+  Search,
+  User,
+  PlayCircle,
+  MessageSquare
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
-  DropdownMenuItem, 
+  DropdownMenuItem,
   DropdownMenuLabel, 
-  DropdownMenuSeparator, 
+  DropdownMenuSeparator,
   DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
-const navItems = [
-  { name: "Dashboard", href: "/trainer/dashboard", icon: LayoutDashboard },
-  { name: "Courses", href: "/trainer/courses", icon: BookOpen },
-  { name: "Messages", href: "/trainer/messages", icon: MessageSquare },
-  { name: "Live Sessions", href: "/trainer/live-sessions", icon: Video },
-  { name: "Earnings", href: "/trainer/earnings", icon: DollarSign },
-  { name: "Analytics", href: "/trainer/analytics", icon: BarChart },
-  { name: "Settings", href: "/trainer/profile", icon: Settings },
-];
+import NavLogo from "@/assets/images/nav-logo.svg"
+import Image from "next/image"
 
-const mockNotifications = [
-  { id: 1, title: "New Message from System Admin", message: "Please review the updated payout terms before next month.", time: "1m ago", read: false },
-  { id: 2, title: "New Enrollment", message: "Sarah Jenkins enrolled in Fullstack Web Development.", time: "10m ago", read: false },
-  { id: 3, title: "Course Approved", message: "Your course 'Advanced UI/UX' has been approved and is now live.", time: "2h ago", read: false },
-  { id: 4, title: "New Review", message: "You received a 5-star review from Michael Chen.", time: "Yesterday", read: true },
-];
+const navigation = [
+  { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
+  { name: "My Courses", href: "/student/my-courses", icon: PlayCircle },
+  { name: "Live Sessions", href: "/student/live-sessions", icon: Calendar },
+  { name: "Messages", href: "/student/messages", icon: MessageSquare },
+  { name: "Certificates", href: "/student/certificates", icon: Award },
+  { name: "Settings", href: "/student/profile", icon: Settings },
+]
 
-export default function TrainerLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [trainerName, setTrainerName] = useState("Alex");
-  const [unreadCount, setUnreadCount] = useState(mockNotifications.filter(n => !n.read).length);
+const mockStudentNotifications = [
+  { id: 1, title: "Upcoming Live Session", message: "Your Advanced React class starts in 15 minutes. Join now!", time: "Just now", read: false },
+  { id: 2, title: "Course Material Updated", message: "New module unlocked: 'State Management Patterns'.", time: "2h ago", read: false },
+  { id: 3, title: "Assignment Graded", message: "Instructor Sarah evaluated your Final Project. You scored 95%!", time: "Yesterday", read: true },
+  { id: 4, title: "Certificate Earned", message: "Congratulations! You earned a certificate in Frontend Basics.", time: "3 days ago", read: true },
+]
 
-  useEffect(() => {
+export default function StudentLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+  const [studentName, setStudentName] = React.useState("Student User")
+  const [unreadCount, setUnreadCount] = React.useState(mockStudentNotifications.filter(n => !n.read).length)
+
+  React.useEffect(() => {
     const storedUser = localStorage.getItem('pendingUserRegistration');
-    let parsed: any = { role: "Trainer" };
+    let parsed: any = { role: "Student" };
     if (storedUser) {
       try {
-        parsed = { ...JSON.parse(storedUser), role: "Trainer" };
+        parsed = { ...JSON.parse(storedUser), role: "Student" };
         if (parsed.name) {
-          setTrainerName(parsed.name.split(' ')[0]);
+          setStudentName(parsed.name.split(' ')[0]);
         }
       } catch (e) {
         // ignore
@@ -73,43 +74,25 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#09090b] flex">
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-r border-border/50 flex flex-col shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]
-        transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}>
-        <div className="h-16 flex items-center px-6 border-b border-border/50 shrink-0 justify-between">
-          <Link href="/trainer/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
+      {/* Premium Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-20 w-64 flex-col border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+        <div className="flex h-16 shrink-0 items-center border-b border-border/50 px-6">
+          <Link href="/student/dashboard" className="flex items-center gap-3 font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
             <Image
               src={NavLogo}
               alt="AnalogueShifts Logo"
               className="w-32 h-auto"
             />
           </Link>
-          <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(false)}>
-            <X className="w-5 h-5" />
-          </button>
         </div>
-
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">
+        <nav className="flex-1 space-y-1.5 px-4 py-6 overflow-y-auto">
           <div className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-            Overview
+            Learning Portal
           </div>
-          {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            const Icon = item.icon;
-            
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              
             return (
               <Link
                 key={item.name}
@@ -121,25 +104,18 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                <Icon className={cn("h-4 w-4 shrink-0 transition-colors", isActive ? "text-[#FFBB0A]" : "text-muted-foreground group-hover:text-foreground")} />
+                <item.icon className={cn("h-4 w-4 shrink-0 transition-colors", isActive ? "text-[#FFBB0A]" : "text-muted-foreground group-hover:text-foreground")} />
                 {item.name}
               </Link>
-            );
+            )
           })}
         </nav>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Premium Top Navigation Header */}
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 shadow-sm">
-          <button 
-            className="text-muted-foreground hover:text-foreground lg:hidden"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          
+      {/* Main content area */}
+      <main className="flex-1 pl-64 flex flex-col min-h-screen">
+        {/* Top Navigation Header */}
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 shadow-sm">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <form className="relative flex flex-1" action="#" method="GET">
               <label htmlFor="search-field" className="sr-only">Search courses</label>
@@ -150,7 +126,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
               <input
                 id="search-field"
                 className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-foreground placeholder:text-muted-foreground focus:ring-0 sm:text-sm"
-                placeholder="Search courses, students, or analytics..."
+                placeholder="Search your courses..."
                 type="search"
                 name="search"
               />
@@ -176,7 +152,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
                     )}
                   </DropdownMenuLabel>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {mockNotifications.map((notif) => (
+                    {mockStudentNotifications.map((notif) => (
                       <div 
                         key={notif.id} 
                         className={cn(
@@ -199,7 +175,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
                   </div>
                   <div className="p-2 border-t border-border/50 bg-muted/10">
                     <DropdownMenuItem asChild className="p-0">
-                      <Link href="/trainer/notifications" className="w-full">
+                      <Link href="/student/notifications" className="w-full">
                         <Button variant="ghost" className="w-full h-8 text-xs font-semibold text-[#0F2942] dark:text-[#FFBB0A]">
                           View All Notifications
                         </Button>
@@ -211,35 +187,34 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
               
               <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-border/60" aria-hidden="true" />
               
-              {/* Profile Avatar Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center gap-x-3 cursor-pointer hover:bg-muted/50 p-1.5 rounded-full transition-colors outline-none">
                     <Avatar className="h-8 w-8 border border-border/50 shadow-sm">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${trainerName}`} />
-                      <AvatarFallback>{trainerName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${studentName}`} />
+                      <AvatarFallback>{studentName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="hidden lg:flex lg:flex-col lg:items-start lg:justify-center">
-                      <span className="text-sm font-semibold leading-none text-foreground truncate max-w-[120px]" title={trainerName}>{trainerName}</span>
-                      <span className="text-[10px] font-medium leading-none text-muted-foreground mt-1">Instructor</span>
+                      <span className="text-sm font-semibold leading-none text-foreground truncate max-w-[120px]" title={studentName}>{studentName}</span>
+                      <span className="text-[10px] font-medium leading-none text-muted-foreground mt-1">Student</span>
                     </div>
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-2 border-border/50 shadow-xl rounded-xl mt-2">
                   <div className="px-2 py-2 mb-2 border-b border-border/50 flex flex-col">
-                    <span className="text-sm font-bold text-foreground truncate" title={trainerName}>{trainerName}</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">Instructor Account</span>
+                    <span className="text-sm font-bold text-foreground truncate" title={studentName}>{studentName}</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">Learner</span>
                   </div>
                   <DropdownMenuItem asChild className="cursor-pointer rounded-md">
-                    <Link href="/trainer/profile" className="flex items-center">
+                    <Link href="/student/profile" className="flex items-center">
                       <User className="mr-2 w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Profile Settings</span>
+                      <span className="font-medium">My Profile</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="cursor-pointer rounded-md">
-                    <Link href="/" className="flex items-center">
+                    <Link href="/courses" className="flex items-center">
                       <Home className="mr-2 w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">View Website</span>
+                      <span className="font-medium">Browse Courses</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border/50 my-2" />
@@ -260,10 +235,11 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        {/* Page Content */}
+        <div className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
-  );
+  )
 }

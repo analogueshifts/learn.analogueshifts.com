@@ -12,10 +12,10 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // Protect Admin routes
-    if (path.startsWith("/admin") && token?.role !== "Admin") {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+    // Protect Admin routes (Temporarily disabled for design preview)
+    // if (path.startsWith("/admin") && token?.role !== "Admin") {
+    //   return NextResponse.redirect(new URL("/login", req.url));
+    // }
 
     return NextResponse.next();
   },
@@ -29,5 +29,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [], // Temporarily disabled for design preview
 };

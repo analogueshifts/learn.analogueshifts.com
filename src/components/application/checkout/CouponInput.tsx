@@ -29,10 +29,39 @@ export default function CouponInput({ onValidated, disabled }: CouponInputProps)
     // Simulate API call to /api/coupons/validate
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    if (code.toUpperCase() === "SAVE20") {
-      setStatus("success");
-      setMessage("20% discount applied!");
-      onValidated(20, code.toUpperCase());
+    // Check localStorage for custom coupons
+    const storedCoupons = JSON.parse(localStorage.getItem("platformCoupons") || "[]");
+    const defaultCoupons = [
+      { code: "BLACKFRIDAY", discount: "50%", status: "Active" },
+      { code: "WELCOME20", discount: "20%", status: "Active" },
+      { code: "SAVE20", discount: "20%", status: "Active" },
+      { code: "SUMMER10", discount: "10%", status: "Expired" }
+    ];
+    
+    const allCoupons = storedCoupons.length > 0 ? storedCoupons : defaultCoupons;
+    
+    const matchedCoupon = allCoupons.find((c: any) => c.code === code.toUpperCase());
+    
+    if (matchedCoupon) {
+      const usedCoupons = JSON.parse(localStorage.getItem("usedCoupons") || "[]");
+      if (usedCoupons.includes(matchedCoupon.code)) {
+        setStatus("error");
+        setMessage("You have already used this coupon");
+        onValidated(0, null);
+      } else if (matchedCoupon.status === "Expired") {
+        setStatus("error");
+        setMessage("This coupon has expired");
+        onValidated(0, null);
+      } else if (matchedCoupon.maxUses !== "Unlimited" && matchedCoupon.currentUses >= matchedCoupon.maxUses) {
+        setStatus("error");
+        setMessage("This coupon has reached its usage limit");
+        onValidated(0, null);
+      } else {
+        setStatus("success");
+        setMessage(`${matchedCoupon.discount} discount applied!`);
+        const discountValue = parseInt(matchedCoupon.discount.replace('%', ''));
+        onValidated(discountValue, code.toUpperCase());
+      }
     } else {
       setStatus("error");
       setMessage("Invalid coupon code");

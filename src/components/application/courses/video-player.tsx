@@ -25,7 +25,25 @@ export default function VideoPlayer({ src, title, courseId, lessonId, poster, on
     
     const handleTimeUpdate = () => {
       if (playerRef.current) {
-        localStorage.setItem(storageKey, playerRef.current.currentTime.toString());
+        const currentTime = playerRef.current.currentTime;
+        localStorage.setItem(storageKey, currentTime.toString());
+        
+        // Save to backend every 30 seconds
+        const lastSaved = parseFloat(localStorage.getItem(`${storageKey}_last_saved`) || "0");
+        if (Math.abs(currentTime - lastSaved) >= 30) {
+          localStorage.setItem(`${storageKey}_last_saved`, currentTime.toString());
+          
+          fetch('/api/learn/watchtime', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              courseId,
+              lessonId,
+              watchTime: currentTime,
+              completed: false
+            })
+          }).catch(console.error);
+        }
       }
     };
 
@@ -36,20 +54,30 @@ export default function VideoPlayer({ src, title, courseId, lessonId, poster, on
       }
     };
 
+    const handleEnded = () => {
+      if (onEnded) onEnded();
+      fetch('/api/learn/watchtime', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId,
+          lessonId,
+          watchTime: playerRef.current?.currentTime || 0,
+          completed: true
+        })
+      }).catch(console.error);
+    };
+
     const player = playerRef.current;
     if (player) {
       player.addEventListener("time-update", handleTimeUpdate);
       player.addEventListener("can-play", handleCanPlay);
-      if (onEnded) {
-        player.addEventListener("ended", onEnded);
-      }
+      player.addEventListener("ended", handleEnded);
       
       return () => {
         player.removeEventListener("time-update", handleTimeUpdate);
         player.removeEventListener("can-play", handleCanPlay);
-        if (onEnded) {
-          player.removeEventListener("ended", onEnded);
-        }
+        player.removeEventListener("ended", handleEnded);
       };
     }
   }, [courseId, lessonId, onEnded]);

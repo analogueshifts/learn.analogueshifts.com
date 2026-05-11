@@ -21,6 +21,18 @@ const GuestNavigation = ({ user, handleLogout }: any) => {
   const authLink = process.env.NEXT_PUBLIC_AUTH_URL;
   const app = process.env.NEXT_PUBLIC_SITE_BUILD_UUID;
 
+  const [mockUser, setMockUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check for our frontend-only mock user session
+    const storedUser = localStorage.getItem('pendingUserRegistration');
+    if (storedUser) {
+      try {
+        setMockUser(JSON.parse(storedUser));
+      } catch (e) {}
+    }
+  }, []);
+
   //Close the Nav bar whenever the pathname changes
   useEffect(() => {
     if (open) {
@@ -34,12 +46,12 @@ const GuestNavigation = ({ user, handleLogout }: any) => {
     >
       {/* Logout Idiom */}
 
-      <nav className="bg-white max-w-[1650px] absolute z-30 h-20 large:h-[104px] px-6 sm:px-20 large:px-[112px] flex items-center justify-between w-full  ">
+      <nav className="bg-white max-w-[1650px] absolute z-30 h-20 large:h-[104px] px-6 sm:px-20 large:px-[112px] flex items-center justify-between w-full shadow-sm border-b border-gray-100">
         {/* Primary Navigation Menu */}
 
         {/* Logo */}
 
-        <Link href="https://www.analogueshifts.com">
+        <Link href="/">
           <Image
             src={NavLogo}
             alt=""
@@ -79,6 +91,21 @@ const GuestNavigation = ({ user, handleLogout }: any) => {
           <CartDropdown />
           {user ? (
             <LoggedInProfileDropdown handleLogout={handleLogout} user={user} />
+          ) : mockUser ? (
+            <div className="flex items-center gap-4 border-l border-gray-200 pl-6 ml-2">
+              <Link
+                className="text-xs lg:text-sm font-bold h-9 lg:h-10 px-4 lg:px-6 whitespace-nowrap duration-200 rounded-full bg-[#0F2942] text-white hover:bg-[#0F2942]/90 shadow-md flex items-center justify-center transition-all hover:-translate-y-0.5"
+                href={
+                  mockUser.role?.toLowerCase().includes('admin') ? '/admin' : 
+                  mockUser.role?.toLowerCase().includes('student') ? '/student/dashboard' : 
+                  '/trainer/dashboard'
+                }
+              >
+                {mockUser.role?.toLowerCase().includes('admin') ? 'Admin Dashboard' : 
+                 mockUser.role?.toLowerCase().includes('student') ? 'Student Dashboard' : 
+                 'Trainer Dashboard'}
+              </Link>
+            </div>
           ) : (
             <>
               <NavLink active={false} href="/login">

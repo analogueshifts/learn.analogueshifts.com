@@ -11,9 +11,10 @@ interface PaystackButtonProps {
   email: string;
   amount: number; // in minor units (e.g. kobo or cents)
   disabled?: boolean;
+  onSuccess?: () => void;
 }
 
-export default function PaystackButton({ email, amount, disabled }: PaystackButtonProps) {
+export default function PaystackButton({ email, amount, disabled, onSuccess }: PaystackButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
@@ -26,9 +27,13 @@ export default function PaystackButton({ email, amount, disabled }: PaystackButt
 
   const initializePayment = usePaystackPayment(config);
 
-  const onSuccess = (reference: any) => {
+  const handleSuccess = (reference: any) => {
     setIsProcessing(true);
     toast.success("Payment successful! Verifying...");
+    
+    if (onSuccess) {
+      onSuccess();
+    }
     
     // Simulate webhook verification
     setTimeout(() => {
@@ -44,7 +49,7 @@ export default function PaystackButton({ email, amount, disabled }: PaystackButt
   const handlePayment = () => {
     setIsProcessing(true);
     // @ts-ignore
-    initializePayment(onSuccess, onClose);
+    initializePayment(handleSuccess, onClose);
   };
 
   return (

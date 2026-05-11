@@ -8,6 +8,7 @@ import coursesData from "@/resources/courses.json";
 import Footer from "@/components/application/footer";
 import GuestNavigation from "@/components/application/guest-navigation";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CourseLearningPage({ params }: { params: { slug: string } }) {
   const course = coursesData.find((c) => c.slug === params.slug) || coursesData[0];
@@ -227,18 +228,51 @@ export default function CourseLearningPage({ params }: { params: { slug: string 
       <div className="max-w-[1800px] mx-auto w-full flex-1 flex flex-col p-4 md:p-6 lg:p-8">
         
         {/* Course Header */}
-        <div className="flex items-center gap-6 mb-6 md:mb-8 mt-2 px-2">
-          <Link 
-            href={`/courses/${course.slug}`} 
-            className="w-12 h-12 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:scale-105 transition-all shadow-sm group"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
-          </Link>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
-              {course.name || course.courseName}
-            </h1>
-            <p className="text-gray-500 font-medium text-sm mt-1">Student Learning Dashboard</p>
+        <div className="flex items-center justify-between gap-6 mb-6 md:mb-8 mt-2 px-2">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => window.history.length > 2 ? window.history.back() : window.location.href = '/student/my-courses'}
+              className="w-12 h-12 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:scale-105 transition-all shadow-sm group"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+                {course.name || course.courseName}
+              </h1>
+              <p className="text-gray-500 font-medium text-sm mt-1">Student Learning Dashboard</p>
+            </div>
+          </div>
+          
+          {/* Progress Ring */}
+          <div className="hidden sm:flex items-center gap-3 bg-white border border-gray-200 px-4 py-2 rounded-2xl shadow-sm">
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-gray-200"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.5"
+                />
+                <path
+                  className="text-[#FFBB0A]"
+                  strokeDasharray={`${Math.min(100, (completedLessons.length / allLessons.length) * 100)}, 100`}
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-900">
+                {Math.round((completedLessons.length / allLessons.length) * 100)}%
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-gray-900">Your Progress</span>
+              <span className="text-[10px] font-medium text-gray-500">{completedLessons.length} of {allLessons.length} complete</span>
+            </div>
           </div>
         </div>
 
@@ -269,98 +303,177 @@ export default function CourseLearningPage({ params }: { params: { slug: string 
             )}
           </div>
 
-          {/* Right Side: Curriculum Sidebar (30%) */}
+          {/* Right Side: Sidebar Tabs (30%) */}
           <div className="w-full lg:w-[30%] bg-white border-l border-gray-200 h-[60vh] lg:h-full flex flex-col shrink-0 overflow-hidden">
-            <div className="p-5 border-b border-gray-200 bg-white shadow-sm z-10 shrink-0">
-              <h2 className="font-bold text-gray-900">Course Content</h2>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto pb-10">
-              {course.contents.map((module: any, mIndex: number) => {
-                const isOpen = openSections.includes(mIndex);
-                
-                // Calculate how many lessons in this specific module are completed
-                const completedInModule = (module.lessons || []).filter((_: any, lIndex: number) => {
-                  const globalIdx = allLessons.find(al => al.moduleIndex === mIndex && al.lessonIndex === lIndex)?.globalIndex || 0;
-                  return completedLessons.includes(globalIdx);
-                }).length;
-                
-                const totalInModule = module.lessons?.length || 0;
-                const isModuleFullyCompleted = totalInModule > 0 && completedInModule === totalInModule;
-
-                return (
-                  <div key={mIndex} className="border-b border-gray-200">
-                    <div 
-                      onClick={() => toggleSection(mIndex)}
-                      className="p-4 bg-gray-50 border-b border-gray-200 sticky top-0 z-10 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className={`font-bold text-[15px] ${isModuleFullyCompleted ? 'text-green-700' : 'text-gray-900'}`}>
-                            Section {mIndex + 1}: {module.title}
-                          </h3>
-                          {isModuleFullyCompleted && (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {completedInModule} / {totalInModule} completed | {module.totalVideoLength || "45min"}
-                        </p>
-                      </div>
-                      <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    </div>
+            <Tabs defaultValue="curriculum" className="w-full h-full flex flex-col">
+              <div className="p-3 border-b border-gray-200 bg-white shadow-sm z-10 shrink-0">
+                <TabsList className="w-full grid grid-cols-3 bg-muted/50 p-1 rounded-xl h-auto">
+                  <TabsTrigger value="curriculum" className="text-xs font-semibold py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0F2942] data-[state=active]:shadow-sm">Curriculum</TabsTrigger>
+                  <TabsTrigger value="notes" className="text-xs font-semibold py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0F2942] data-[state=active]:shadow-sm">Notes</TabsTrigger>
+                  <TabsTrigger value="qa" className="text-xs font-semibold py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0F2942] data-[state=active]:shadow-sm">Q&A</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto relative bg-gray-50/30">
+                <TabsContent value="curriculum" className="m-0 h-full border-0 outline-none pb-10">
+                  {course.contents.map((module: any, mIndex: number) => {
+                    const isOpen = openSections.includes(mIndex);
                     
-                    {isOpen && (
-                      <div className="flex flex-col bg-white">
-                        {module.lessons?.map((l: any, lIndex: number) => {
-                          const lesson = typeof l === 'string' ? { title: l, type: 'video' } : l;
-                          const lessonType = lesson.type || 'video';
-                          
-                          // Find its global index
-                          const globalIdx = allLessons.find(al => al.moduleIndex === mIndex && al.lessonIndex === lIndex)?.globalIndex || 0;
-                          const isActive = globalIdx === activeGlobalIndex;
-                          const isCompleted = completedLessons.includes(globalIdx);
-                          
-                          const Icon = lessonType === 'article' ? FileText : 
-                                       lessonType === 'quiz' ? CheckSquare : 
-                                       lessonType === 'assignment' ? ClipboardList : 
-                                       PlayCircle;
+                    // Calculate how many lessons in this specific module are completed
+                    const completedInModule = (module.lessons || []).filter((_: any, lIndex: number) => {
+                      const globalIdx = allLessons.find(al => al.moduleIndex === mIndex && al.lessonIndex === lIndex)?.globalIndex || 0;
+                      return completedLessons.includes(globalIdx);
+                    }).length;
+                    
+                    const totalInModule = module.lessons?.length || 0;
+                    const isModuleFullyCompleted = totalInModule > 0 && completedInModule === totalInModule;
 
-                          return (
-                            <div 
-                              key={lIndex} 
-                              onClick={() => handleSetLesson(globalIdx)}
-                              className={`flex gap-3 p-4 transition-colors cursor-pointer border-b border-gray-100 last:border-0 ${
-                                isActive ? 'bg-background-darkYellow/5 border-l-4 border-l-background-darkYellow' : 'hover:bg-gray-50 border-l-4 border-l-transparent'
-                              }`}
-                            >
-                              <div className="mt-0.5 shrink-0 flex items-center justify-center w-5 h-5">
-                                {isCompleted ? (
-                                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-                                    <Check className="w-3 h-3 text-white" />
-                                  </div>
-                                ) : (
-                                  <input type="checkbox" checked={isActive} readOnly className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer" />
-                                )}
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                <span className={`text-[14px] leading-snug ${isActive ? 'font-bold text-gray-900' : 'text-gray-700'}`}>
-                                  {lIndex + 1}. {lesson.title}
-                                </span>
-                                <div className="flex items-center gap-1.5 mt-1.5">
-                                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-background-darkYellow' : 'text-gray-500'}`} />
-                                  <span className="text-xs text-gray-500">{lesson.duration || "08:15"}</span>
-                                </div>
-                              </div>
+                    return (
+                      <div key={mIndex} className="border-b border-gray-200">
+                        <div 
+                          onClick={() => toggleSection(mIndex)}
+                          className="p-4 bg-gray-50 border-b border-gray-200 sticky top-0 z-10 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className={`font-bold text-[15px] ${isModuleFullyCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                                Section {mIndex + 1}: {module.title}
+                              </h3>
+                              {isModuleFullyCompleted && (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
                             </div>
-                          );
-                        })}
+                            <p className="text-xs text-gray-500 mt-1">
+                              {completedInModule} / {totalInModule} completed | {module.totalVideoLength || "45min"}
+                            </p>
+                          </div>
+                          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                        
+                        {isOpen && (
+                          <div className="flex flex-col bg-white">
+                            {module.lessons?.map((l: any, lIndex: number) => {
+                              const lesson = typeof l === 'string' ? { title: l, type: 'video' } : l;
+                              const lessonType = lesson.type || 'video';
+                              
+                              // Find its global index
+                              const globalIdx = allLessons.find(al => al.moduleIndex === mIndex && al.lessonIndex === lIndex)?.globalIndex || 0;
+                              const isActive = globalIdx === activeGlobalIndex;
+                              const isCompleted = completedLessons.includes(globalIdx);
+                              
+                              const Icon = lessonType === 'article' ? FileText : 
+                                          lessonType === 'quiz' ? CheckSquare : 
+                                          lessonType === 'assignment' ? ClipboardList : 
+                                          PlayCircle;
+
+                              return (
+                                <div 
+                                  key={lIndex} 
+                                  onClick={() => handleSetLesson(globalIdx)}
+                                  className={`flex gap-3 p-4 transition-colors cursor-pointer border-b border-gray-100 last:border-0 ${
+                                    isActive ? 'bg-background-darkYellow/5 border-l-4 border-l-background-darkYellow' : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                                  }`}
+                                >
+                                  <div className="mt-0.5 shrink-0 flex items-center justify-center w-5 h-5">
+                                    {isCompleted ? (
+                                      <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-white" />
+                                      </div>
+                                    ) : (
+                                      <input type="checkbox" checked={isActive} readOnly className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer" />
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col flex-1">
+                                    <span className={`text-[14px] leading-snug ${isActive ? 'font-bold text-gray-900' : 'text-gray-700'}`}>
+                                      {lIndex + 1}. {lesson.title}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 mt-1.5">
+                                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-background-darkYellow' : 'text-gray-500'}`} />
+                                      <span className="text-xs text-gray-500">{lesson.duration || "08:15"}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    );
+                  })}
+                </TabsContent>
+
+                <TabsContent value="notes" className="m-0 p-5 h-full border-0 outline-none flex flex-col space-y-4">
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-2">My Notes</h3>
+                    <textarea 
+                      className="w-full h-32 p-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#0F2942]"
+                      placeholder="Take a note..."
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <Button variant="outline" size="sm" className="h-8 text-xs font-semibold rounded-lg bg-gray-50 hover:bg-gray-100">
+                        @ 04:20
+                      </Button>
+                      <Button size="sm" className="h-8 text-xs font-bold bg-[#0F2942] text-white rounded-lg">
+                        Save Note
+                      </Button>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 flex-1">
+                    <div className="p-3 bg-white border border-gray-100 rounded-xl shadow-sm mb-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-[#FFBB0A] bg-[#FFBB0A]/10 px-2 py-0.5 rounded-md">@ 01:15</span>
+                        <span className="text-[10px] text-gray-400">Oct 12</span>
+                      </div>
+                      <p className="text-sm text-gray-700">Need to remember to use useEffect when saving to localStorage.</p>
+                    </div>
+                  </div>
+
+                  <Button variant="outline" className="w-full font-bold border-gray-200 hover:bg-gray-50 text-[#0F2942]">
+                    Download PDF
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="qa" className="m-0 p-5 h-full border-0 outline-none flex flex-col space-y-4">
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-2">Ask a Question</h3>
+                    <input 
+                      type="text"
+                      className="w-full h-10 px-3 border border-gray-200 rounded-xl mb-2 focus:outline-none focus:ring-2 focus:ring-[#0F2942] text-sm"
+                      placeholder="Question title..."
+                    />
+                    <textarea 
+                      className="w-full h-24 p-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#0F2942] text-sm"
+                      placeholder="Describe what you are stuck on..."
+                    />
+                    <div className="flex justify-end mt-2">
+                      <Button size="sm" className="h-8 text-xs font-bold bg-[#0F2942] text-white rounded-lg">
+                        Post Question
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4 flex-1">
+                    <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center shrink-0">
+                          <button className="text-gray-400 hover:text-[#0F2942]">▲</button>
+                          <span className="font-bold text-sm">12</span>
+                          <button className="text-gray-400 hover:text-[#0F2942]">▼</button>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-900 leading-tight mb-1">Why is my progress not saving?</h4>
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">I have completed the video but it still shows as incomplete in the sidebar.</p>
+                          <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                            <span className="font-semibold text-gray-600">Alex</span> • <span>2 days ago</span> • <span className="font-semibold text-[#0BA4DB]">1 Answer</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
           </div>
 
         </div>

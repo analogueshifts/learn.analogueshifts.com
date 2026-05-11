@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -93,11 +93,48 @@ export default function ProfileSetupPage() {
     form.setValue("skills", newSkills.join(", "));
   };
 
+  const [pendingRegistration, setPendingRegistration] = useState<{name: string, email: string, role: string} | null>(null);
+
+  // Initialize from localStorage
+  useEffect(() => {
+    const data = localStorage.getItem('pendingUserRegistration');
+    if (data) {
+      const parsed = JSON.parse(data);
+      setPendingRegistration(parsed);
+      form.setValue("name", parsed.name);
+    }
+  }, [form]);
+
   async function onSubmit(values: z.infer<typeof profileSchema>) {
     setIsLoading(true);
+    
+    // If user is registering as Trainer, create a mock application in localStorage
+    if (pendingRegistration?.role === "Trainer") {
+      const existingAppsStr = localStorage.getItem("mockTrainerApplications");
+      const existingApps = existingAppsStr ? JSON.parse(existingAppsStr) : [];
+      
+      const newApplication = {
+        id: `app_mock_${Date.now()}`,
+        name: values.name,
+        email: pendingRegistration.email,
+        expertise: values.skills?.split(',')[0] || "General Instruction", // first skill as expertise
+        experience: values.bio ? "Detailed bio provided" : "New Instructor",
+        status: "Pending",
+        appliedDate: new Date().toISOString().split('T')[0]
+      };
+      
+      localStorage.setItem("mockTrainerApplications", JSON.stringify([...existingApps, newApplication]));
+    }
+
     // Mock API call to update profile
     await new Promise(resolve => setTimeout(resolve, 1500));
-    router.push("/"); // Redirect to main app/dashboard
+    
+    // Redirect based on role
+    if (pendingRegistration?.role === "Trainer") {
+      router.push("/trainer/dashboard");
+    } else {
+      router.push("/");
+    }
     setIsLoading(false);
   }
 

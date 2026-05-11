@@ -31,7 +31,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<"Student" | "Trainee" | null>(null);
+  const [role, setRole] = useState<"Student" | "Trainer" | null>(null);
 
   const form = useForm<z.infer<typeof registerSchemaStep1>>({
     resolver: zodResolver(registerSchemaStep1),
@@ -51,6 +51,14 @@ export default function RegisterPage() {
     if (!role) return;
     setIsLoading(true);
     
+    // Save to localStorage so profile-setup knows who is registering
+    const formValues = form.getValues();
+    localStorage.setItem('pendingUserRegistration', JSON.stringify({
+      name: `${formValues.firstName} ${formValues.lastName}`,
+      email: formValues.email,
+      role: role
+    }));
+
     // Simulating API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     window.location.href = "/profile-setup";
@@ -239,15 +247,15 @@ export default function RegisterPage() {
             
             <button 
               type="button"
-              onClick={() => setRole("Trainee")}
+              onClick={() => setRole("Trainer")}
               className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all duration-300 text-left w-full ${
-                role === "Trainee"
+                role === "Trainer"
                   ? "bg-background-darkYellow/5 border-background-darkYellow ring-4 ring-background-darkYellow/10 shadow-md"
                   : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm"
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
-                role === "Trainee"
+                role === "Trainer"
                   ? "bg-background-darkYellow text-white shadow-md scale-110"
                   : "bg-gray-50 text-gray-400 border border-gray-200"
               }`}>
@@ -256,15 +264,15 @@ export default function RegisterPage() {
 
               <div className="flex-1 pt-1">
                 <h3 className={`font-bold text-lg mb-1 ${
-                  role === "Trainee" ? "text-primary-tan" : "text-gray-700"
-                }`}>Trainee</h3>
-                <p className="text-content-grayText text-sm font-medium leading-relaxed pr-2">I am part of a dedicated cohort or apprenticeship program.</p>
+                  role === "Trainer" ? "text-primary-tan" : "text-gray-700"
+                }`}>Trainer</h3>
+                <p className="text-content-grayText text-sm font-medium leading-relaxed pr-2">I want to create courses, teach students, and earn revenue.</p>
               </div>
 
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
-                role === "Trainee" ? "border-background-darkYellow" : "border-gray-300"
+                role === "Trainer" ? "border-background-darkYellow" : "border-gray-300"
               }`}>
-                {role === "Trainee" && <div className="w-2.5 h-2.5 bg-background-darkYellow rounded-full animate-in zoom-in duration-200" />}
+                {role === "Trainer" && <div className="w-2.5 h-2.5 bg-background-darkYellow rounded-full animate-in zoom-in duration-200" />}
               </div>
             </button>
           </div>

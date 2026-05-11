@@ -38,12 +38,26 @@ const recentStudents = [
 
 export default function TrainerDashboardPage() {
   const [greeting, setGreeting] = useState("Welcome back");
+  const [trainerName, setTrainerName] = useState("Alex");
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
+
+    // Read dynamic user from localStorage (mock login/registration)
+    const storedUser = localStorage.getItem('pendingUserRegistration');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed.name) {
+          setTrainerName(parsed.name.split(' ')[0]);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
   }, []);
 
   const completedSteps = onboardingSteps.filter(s => s.completed).length;
@@ -52,36 +66,94 @@ export default function TrainerDashboardPage() {
   return (
     <div className="p-6 lg:p-10 max-w-[1600px] mx-auto space-y-8 pb-20">
       
-      {/* Ultra Premium Dark Welcome Hero */}
-      <div className="relative overflow-hidden bg-gray-900 rounded-3xl p-10 lg:p-14 min-h-[260px] shadow-2xl border border-gray-800 flex flex-col lg:flex-row items-center justify-between gap-10">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-background-darkYellow/20 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* Premium Bento-Style Hero Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 z-10 w-full lg:w-auto">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-gray-800 shadow-2xl overflow-hidden shrink-0 bg-gray-800">
-            <img src="/courses/devops-instructor.svg" alt="Profile" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-              <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">{greeting}, Alex!</h1>
-              <span className="w-max px-3 py-1 bg-background-darkYellow/20 text-background-darkYellow border border-background-darkYellow/30 font-bold text-[10px] uppercase tracking-wider rounded-full backdrop-blur-sm">Top Instructor</span>
+        {/* Main Welcome Card */}
+        <div className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F2942] via-[#123250] to-[#0A1A2A] text-white shadow-2xl border border-white/10 p-8 lg:p-12 flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFBB0A] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+          <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-[120px] opacity-20"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+          
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-background shadow-2xl overflow-hidden shrink-0 bg-white">
+              <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${trainerName}`} alt="Profile" className="w-full h-full object-cover" />
             </div>
-            <p className="text-gray-300 text-base lg:text-lg max-w-xl">You have 3 new enrollments and 1 pending question today. What would you like to do?</p>
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-widest text-[#FFBB0A] mb-3 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFBB0A] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFBB0A]"></span>
+                </span>
+                Trainer Dashboard Active
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">{greeting},<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFBB0A] to-amber-200">{trainerName}!</span></h1>
+            </div>
+          </div>
+          
+          <div className="relative z-10">
+            <p className="text-white/70 text-lg max-w-xl font-medium leading-relaxed mb-8">
+              Your ecosystem is thriving. You've reached <strong className="text-white">1,204 students</strong> this month and generated <strong className="text-emerald-400">15% more revenue</strong> than last month.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/trainer/courses/new">
+                <Button className="bg-[#FFBB0A] hover:bg-[#FFBB0A]/90 text-[#0F2942] font-extrabold px-8 h-12 rounded-xl shadow-[0_0_20px_rgba(255,187,10,0.3)] transition-all hover:scale-105">
+                  <Plus className="mr-2 h-5 w-5" /> Launch New Course
+                </Button>
+              </Link>
+              <Link href="/trainer/live-sessions">
+                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold px-6 h-12 rounded-xl bg-white/5 backdrop-blur-sm transition-all hover:border-white/40">
+                  <PlayCircle className="mr-2 h-5 w-5" /> Schedule Live Session
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <Button className="bg-background-darkYellow hover:bg-yellow-500 text-white font-bold h-12 px-6 rounded-xl shadow-lg shadow-background-darkYellow/20 w-full sm:w-auto" asChild>
-            <Link href="/trainer/courses/new">
-              <Plus className="w-5 h-5 mr-2" /> Create Course
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-12 px-6 rounded-xl border-gray-600 bg-white/10 hover:bg-white/20 text-white border-0 backdrop-blur-md font-bold w-full sm:w-auto" asChild>
-            <Link href="/trainer/live-sessions">
-              <PlayCircle className="w-5 h-5 mr-2" /> Go Live
-            </Link>
-          </Button>
+        {/* Gamified Level & Next Milestone Card */}
+        <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-muted/10 border border-border/50 shadow-xl p-8 flex flex-col justify-between group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 dark:bg-amber-500/5 rounded-bl-full -z-10 transition-transform group-hover:scale-110 duration-500"></div>
+          
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-1">Current Status</p>
+              <h3 className="text-2xl font-black text-foreground">Top Educator</h3>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shadow-inner">
+              <TrendingUp className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center items-center py-4">
+            <div className="relative w-32 h-32 flex items-center justify-center">
+              {/* SVG Progress Ring */}
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/30" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray="283" strokeDashoffset="56" className="text-[#0F2942] dark:text-[#FFBB0A] drop-shadow-md" strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-black text-foreground mt-1">Level 8</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Expert</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-between text-xs font-bold">
+              <span className="text-muted-foreground">Next Milestone: Master</span>
+              <span className="text-[#0F2942] dark:text-[#FFBB0A]">80%</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
+              <div className="bg-[#0F2942] dark:bg-[#FFBB0A] h-full rounded-full w-[80%] relative">
+                <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+              </div>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground text-center mt-2 pt-2 border-t border-border/50">
+              Just <strong className="text-foreground">24 more enrollments</strong> to unlock Master Tier.
+            </p>
+          </div>
         </div>
+
       </div>
 
       {/* Primary KPI Cards */}
