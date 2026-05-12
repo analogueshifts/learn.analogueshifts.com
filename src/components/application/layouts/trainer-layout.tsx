@@ -16,7 +16,8 @@ import {
   Search,
   Bell,
   MessageSquare,
-  Settings
+  Settings,
+  FileText
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -36,11 +37,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const navItems = [
   { name: "Dashboard", href: "/trainer/dashboard", icon: LayoutDashboard },
   { name: "Courses", href: "/trainer/courses", icon: BookOpen },
+  { name: "Assignments", href: "/trainer/assignments", icon: FileText },
   { name: "Messages", href: "/trainer/messages", icon: MessageSquare },
   { name: "Live Sessions", href: "/trainer/live-sessions", icon: Video },
   { name: "Earnings", href: "/trainer/earnings", icon: DollarSign },
   { name: "Analytics", href: "/trainer/analytics", icon: BarChart },
-  { name: "Settings", href: "/trainer/profile", icon: Settings },
 ];
 
 const mockNotifications = [

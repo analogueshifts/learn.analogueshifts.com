@@ -130,12 +130,7 @@ export default function SettingsPage() {
               >
                 <Tags className="w-4 h-4 mr-3" /> Categories
               </TabsTrigger>
-              <TabsTrigger 
-                value="coupons" 
-                className="w-full justify-start py-3 px-4 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F2942] data-[state=active]:border data-[state=active]:border-border/50 dark:data-[state=active]:bg-zinc-800 dark:data-[state=active]:text-white transition-all"
-              >
-                <Ticket className="w-4 h-4 mr-3" /> Coupon Manager
-              </TabsTrigger>
+
               <TabsTrigger 
                 value="gateways" 
                 className="w-full justify-start py-3 px-4 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F2942] data-[state=active]:border data-[state=active]:border-border/50 dark:data-[state=active]:bg-zinc-800 dark:data-[state=active]:text-white transition-all"
@@ -298,47 +293,7 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {activeTab === "coupons" && (
-            <Card className="border-border/50 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-              <CardHeader className="bg-muted/10 border-b border-border/50 pb-6 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Coupon Manager</CardTitle>
-                  <CardDescription>Create promotional discount codes.</CardDescription>
-                </div>
-                <Button 
-                  className="bg-[#FFBB0A] hover:bg-[#EAB308] text-[#0F2942] font-bold"
-                  onClick={() => setIsCouponModalOpen(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Create Coupon
-                </Button>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {coupons.map((coupon) => (
-                    <div key={coupon.code} className="flex items-center justify-between p-5 border border-border/50 rounded-xl hover:shadow-md transition-shadow">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="font-mono text-lg font-bold bg-muted/50 tracking-widest px-3 py-1 text-[#0F2942] dark:text-white">
-                            {coupon.code}
-                          </Badge>
-                          <Badge variant="secondary" className={coupon.status === "Active" ? "bg-emerald-500/10 text-emerald-600" : "bg-destructive/10 text-destructive"}>
-                            {coupon.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground flex gap-4">
-                          <span>Discount: <strong className="text-foreground">{coupon.discount}</strong></span>
-                          <span>Uses: <strong className="text-foreground">{coupon.currentUses} / {coupon.maxUses}</strong></span>
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteCoupon(coupon.code)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+
 
           {activeTab === "gateways" && (
             <Card className="border-border/50 shadow-sm animate-in fade-in zoom-in-95 duration-300">
@@ -517,71 +472,6 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Coupon Modal */}
-      <Dialog open={isCouponModalOpen} onOpenChange={setIsCouponModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2 font-extrabold">
-              <Ticket className="h-5 w-5 text-[#FFBB0A]" /> Create Coupon
-            </DialogTitle>
-            <DialogDescription>
-              Generate a new promotional discount code.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-5 py-4">
-            <div className="grid gap-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Coupon Code</Label>
-              <Input
-                value={newCoupon.code}
-                onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
-                placeholder="e.g. FLASH50"
-                className="h-12 rounded-xl focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] font-mono uppercase"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Discount Percentage</Label>
-              <select
-                value={newCoupon.discount}
-                onChange={(e) => setNewCoupon({ ...newCoupon, discount: e.target.value })}
-                className="h-12 w-full rounded-xl border border-border/50 bg-white dark:bg-card px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] transition-all"
-              >
-                <option value="" disabled>Select a discount</option>
-                <option value="5%">5% Off</option>
-                <option value="10%">10% Off</option>
-                <option value="15%">15% Off</option>
-                <option value="20%">20% Off</option>
-                <option value="25%">25% Off</option>
-                <option value="30%">30% Off</option>
-                <option value="40%">40% Off</option>
-                <option value="50%">50% Off</option>
-                <option value="75%">75% Off</option>
-                <option value="100%">100% Off (Free)</option>
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Max Usage Limit</Label>
-              <Input
-                type="number"
-                value={newCoupon.maxUses}
-                onChange={(e) => setNewCoupon({ ...newCoupon, maxUses: e.target.value })}
-                placeholder="Leave blank for unlimited"
-                className="h-12 rounded-xl focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A]"
-                min="1"
-              />
-            </div>
-          </div>
-          <DialogFooter className="border-t border-border/50 pt-4 mt-2">
-            <Button variant="ghost" onClick={() => setIsCouponModalOpen(false)} className="rounded-xl font-bold">Cancel</Button>
-            <Button 
-              onClick={handleAddCoupon} 
-              disabled={!newCoupon.code || !newCoupon.discount} 
-              className="bg-[#0F2942] hover:bg-[#0F2942]/90 text-[#FFBB0A] font-bold rounded-xl h-10 px-6"
-            >
-              Create Coupon
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Configure Gateway Modal */}
       <Dialog open={!!activeGatewayModal} onOpenChange={(open) => !open && setActiveGatewayModal(null)}>

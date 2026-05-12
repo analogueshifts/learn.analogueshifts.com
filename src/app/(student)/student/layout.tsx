@@ -15,7 +15,9 @@ import {
   Search,
   User,
   PlayCircle,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Trophy
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -36,9 +38,10 @@ const navigation = [
   { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
   { name: "My Courses", href: "/student/my-courses", icon: PlayCircle },
   { name: "Live Sessions", href: "/student/live-sessions", icon: Calendar },
+  { name: "Assignments", href: "/student/assignments", icon: FileText },
+  { name: "Achievements", href: "/student/achievements", icon: Trophy },
   { name: "Messages", href: "/student/messages", icon: MessageSquare },
   { name: "Certificates", href: "/student/certificates", icon: Award },
-  { name: "Settings", href: "/student/profile", icon: Settings },
 ]
 
 const mockStudentNotifications = [

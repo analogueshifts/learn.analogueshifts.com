@@ -18,6 +18,7 @@ import {
   User,
   Megaphone,
   Target,
+  Ticket,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,6 +40,7 @@ const navigation = [
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Courses", href: "/admin/courses", icon: BookOpen },
   { name: "Trainers", href: "/admin/trainers", icon: GraduationCap },
+  { name: "Coupons", href: "/admin/coupons", icon: Ticket },
   { name: "Broadcasts", href: "/admin/messages", icon: Megaphone },
   { name: "Marketing", href: "/admin/marketing", icon: Target },
   { name: "Finance", href: "/admin/finance", icon: DollarSign },

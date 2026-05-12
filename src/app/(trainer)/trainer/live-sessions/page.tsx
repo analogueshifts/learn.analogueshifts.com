@@ -151,7 +151,7 @@ export default function TrainerLiveSessionsPage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-900">Date</label>
                     <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-background-darkYellow focus:border-background-darkYellow outline-none transition-all font-medium text-gray-900" />
@@ -159,6 +159,16 @@ export default function TrainerLiveSessionsPage() {
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-900">Time</label>
                     <input type="time" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-background-darkYellow focus:border-background-darkYellow outline-none transition-all font-medium text-gray-900" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-gray-900">Duration</label>
+                    <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-background-darkYellow focus:border-background-darkYellow outline-none transition-all font-medium text-gray-900 appearance-none">
+                      <option value="30">30 mins</option>
+                      <option value="45">45 mins</option>
+                      <option value="60">60 mins</option>
+                      <option value="90">90 mins</option>
+                      <option value="120">120 mins</option>
+                    </select>
                   </div>
                 </div>
 
