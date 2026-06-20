@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Tag, Check, X } from "lucide-react";
 
 interface CouponInputProps {
+  courseIds: string[];
   onValidated: (discountPercentage: number, code: string | null) => void;
   disabled?: boolean;
 }
 
-export default function CouponInput({ onValidated, disabled }: CouponInputProps) {
+export default function CouponInput({ courseIds, onValidated, disabled }: CouponInputProps) {
   const [code, setCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -25,49 +26,26 @@ export default function CouponInput({ onValidated, disabled }: CouponInputProps)
     }
 
     setIsValidating(true);
-    
-    // Simulate API call to /api/coupons/validate
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Check localStorage for custom coupons
-    const storedCoupons = JSON.parse(localStorage.getItem("platformCoupons") || "[]");
-    const defaultCoupons = [
-      { code: "BLACKFRIDAY", discount: "50%", status: "Active" },
-      { code: "WELCOME20", discount: "20%", status: "Active" },
-      { code: "SAVE20", discount: "20%", status: "Active" },
-      { code: "SUMMER10", discount: "10%", status: "Expired" }
-    ];
-    
-    const allCoupons = storedCoupons.length > 0 ? storedCoupons : defaultCoupons;
-    
-    const matchedCoupon = allCoupons.find((c: any) => c.code === code.toUpperCase());
-    
-    if (matchedCoupon) {
-      const usedCoupons = JSON.parse(localStorage.getItem("usedCoupons") || "[]");
-      if (usedCoupons.includes(matchedCoupon.code)) {
-        setStatus("error");
-        setMessage("You have already used this coupon");
-        onValidated(0, null);
-      } else if (matchedCoupon.status === "Expired") {
-        setStatus("error");
-        setMessage("This coupon has expired");
-        onValidated(0, null);
-      } else if (matchedCoupon.maxUses !== "Unlimited" && matchedCoupon.currentUses >= matchedCoupon.maxUses) {
-        setStatus("error");
-        setMessage("This coupon has reached its usage limit");
-        onValidated(0, null);
-      } else {
-        setStatus("success");
-        setMessage(`${matchedCoupon.discount} discount applied!`);
-        const discountValue = parseInt(matchedCoupon.discount.replace('%', ''));
-        onValidated(discountValue, code.toUpperCase());
-      }
-    } else {
+
+    const response = await fetch("/api/coupons/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code.toUpperCase(), courseIds }),
+    });
+    const body = await response.json();
+
+    if (!response.ok) {
       setStatus("error");
-      setMessage("Invalid coupon code");
+      setMessage(body?.error ?? "Invalid coupon code");
       onValidated(0, null);
+    } else {
+      const { discountAmount, subtotal, code: appliedCode } = body.data;
+      const discountPercentage = subtotal > 0 ? Math.round((discountAmount / subtotal) * 100) : 0;
+      setStatus("success");
+      setMessage(`${discountPercentage}% discount applied!`);
+      onValidated(discountPercentage, appliedCode);
     }
-    
+
     setIsValidating(false);
   };
 

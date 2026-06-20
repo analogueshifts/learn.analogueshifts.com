@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import Image from "next/image";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -50,17 +51,28 @@ export default function RegisterPage() {
   async function onFinalSubmit() {
     if (!role) return;
     setIsLoading(true);
-    
-    // Save to localStorage so profile-setup knows who is registering
-    const formValues = form.getValues();
-    localStorage.setItem('pendingUserRegistration', JSON.stringify({
-      name: `${formValues.firstName} ${formValues.lastName}`,
-      email: formValues.email,
-      role: role
-    }));
 
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const formValues = form.getValues();
+
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formValues, role }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      form.setError("root", { message: body?.error ?? "Registration failed" });
+      setIsLoading(false);
+      return;
+    }
+
+    await signIn("credentials", {
+      email: formValues.email,
+      password: formValues.password,
+      redirect: false,
+    });
+
     window.location.href = "/profile-setup";
   }
 
@@ -213,6 +225,12 @@ export default function RegisterPage() {
 
       {step === 2 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          {form.formState.errors.root && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm font-semibold border border-red-100 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+              {form.formState.errors.root.message}
+            </div>
+          )}
           <div className="flex flex-col gap-4">
             <button 
               type="button"

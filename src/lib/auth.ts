@@ -1,9 +1,13 @@
 import { NextAuthOptions } from "next-auth";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
   },
@@ -15,6 +19,15 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          role: "STUDENT",
+        };
+      },
     }),
     LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID || "",
@@ -24,13 +37,13 @@ export const authOptions: NextAuthOptions = {
       },
       issuer: "https://www.linkedin.com",
       jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
-      profile(profile, tokens) {
+      profile(profile) {
         return {
           id: profile.sub,
           name: profile.name,
           email: profile.email,
           image: profile.picture,
-          role: "Student", // Default role, could be updated after registration
+          role: "STUDENT",
         };
       },
     }),
@@ -41,22 +54,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Placeholder for actual authentication logic against a database
         if (!credentials?.email || !credentials?.password) return null;
 
-        // MOCK AUTHENTICATION - Replace with real database call
-        const user = {
-          id: "1",
-          name: "Mock User",
-          email: credentials.email,
-          role: "Student", // Example role
-        };
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        if (!user?.password) return null;
 
-        if (user) {
-          return user;
-        } else {
-          return null;
-        }
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) return null;
+
+        return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
     }),
   ],
@@ -65,7 +71,14 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        return token;
       }
+
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+        if (dbUser) token.role = dbUser.role;
+      }
+
       return token;
     },
     async session({ session, token }) {

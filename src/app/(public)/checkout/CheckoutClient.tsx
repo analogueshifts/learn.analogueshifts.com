@@ -18,31 +18,17 @@ export default function CheckoutClient() {
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
   const cartItems = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
+  const clearCart = useCartStore((state) => state.clearCart);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Coupon usage tracking now happens server-side (Coupon.usedCount) when the
+  // order is fulfilled -- see src/lib/order-fulfillment.ts.
   const handlePaymentSuccess = () => {
-    if (appliedCouponCode) {
-      const usedCoupons = JSON.parse(localStorage.getItem("usedCoupons") || "[]");
-      if (!usedCoupons.includes(appliedCouponCode)) {
-        usedCoupons.push(appliedCouponCode);
-        localStorage.setItem("usedCoupons", JSON.stringify(usedCoupons));
-      }
-      
-      const platformCoupons = JSON.parse(localStorage.getItem("platformCoupons") || "[]");
-      if (platformCoupons.length > 0) {
-        const updatedPlatformCoupons = platformCoupons.map((c: any) => {
-          if (c.code === appliedCouponCode) {
-            return { ...c, currentUses: (c.currentUses || 0) + 1 };
-          }
-          return c;
-        });
-        localStorage.setItem("platformCoupons", JSON.stringify(updatedPlatformCoupons));
-      }
-    }
+    clearCart();
   };
 
   if (!mounted) return null;
@@ -71,8 +57,6 @@ export default function CheckoutClient() {
   const vatAmount = subtotalAfterDiscount * vatRate;
   
   const total = subtotalAfterDiscount + vatAmount;
-  // Convert total to minor units (cents/kobo)
-  const minorTotal = Math.round(total * 100);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
@@ -95,8 +79,20 @@ export default function CheckoutClient() {
             </div>
             
             <div className="max-w-md">
-              {gateway === "paystack" && <PaystackButton email="student@example.com" amount={minorTotal} onSuccess={handlePaymentSuccess} />}
-              {gateway === "flutterwave" && <FlutterwaveButton email="student@example.com" name="Jane Doe" amount={total} onSuccess={handlePaymentSuccess} />}
+              {gateway === "paystack" && (
+                <PaystackButton
+                  courseIds={cartItems.map((item) => item.id)}
+                  couponCode={appliedCouponCode}
+                  onSuccess={handlePaymentSuccess}
+                />
+              )}
+              {gateway === "flutterwave" && (
+                <FlutterwaveButton
+                  courseIds={cartItems.map((item) => item.id)}
+                  couponCode={appliedCouponCode}
+                  onSuccess={handlePaymentSuccess}
+                />
+              )}
             </div>
             
             <div className="flex items-center gap-2 text-sm font-medium text-gray-400 pt-4">
@@ -174,10 +170,13 @@ export default function CheckoutClient() {
             </div>
 
             <div className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100/80 shadow-inner">
-              <CouponInput onValidated={(val, code) => {
-                setDiscount(val);
-                setAppliedCouponCode(code);
-              }} />
+              <CouponInput
+                courseIds={cartItems.map((item) => item.id)}
+                onValidated={(val, code) => {
+                  setDiscount(val);
+                  setAppliedCouponCode(code);
+                }}
+              />
             </div>
           </div>
         </div>

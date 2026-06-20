@@ -1,5 +1,4 @@
 import GuestLayout from "@/components/application/layouts/guest";
-import coursesData from "@/resources/courses.json";
 import { Star, Check, Lock, PlayCircle, Clock, Users, GraduationCap, Globe, Eye } from "lucide-react";
 import SmartBackButton from "@/components/application/courses/smart-back-button";
 import { Button } from "@/components/ui/button";
@@ -12,19 +11,31 @@ import CourseActionButtons from "@/components/application/courses/CourseActionBu
 import Image from "next/image";
 import HeroSvg from "@/assets/images/home/hero.svg";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { mapApiCourseToLegacy } from "@/lib/course-adapter";
 
-export default function CourseDetailPage({ 
+export default async function CourseDetailPage({
   params,
-  searchParams 
-}: { 
+  searchParams
+}: {
   params: { slug: string },
   searchParams: { from?: string, mode?: string }
 }) {
-  const course = coursesData.find((c) => c.slug === params.slug);
+  const dbCourse = await prisma.course.findUnique({
+    where: { slug: params.slug },
+    include: {
+      category: true,
+      trainer: { select: { id: true, name: true, avatar: true, bio: true } },
+      sections: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
+      reviews: { orderBy: { createdAt: "desc" } },
+    },
+  });
 
-  if (!course) {
+  if (!dbCourse || dbCourse.status !== "LIVE") {
     notFound();
   }
+
+  const course = mapApiCourseToLegacy(dbCourse);
 
   const isPreview = searchParams.mode === 'preview';
 

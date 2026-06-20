@@ -2,27 +2,11 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Star, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import coursesData from "@/resources/courses.json";
-
-const TRAINER_NAMES = ["Jane Doe", "John Smith", "Alice Wonderland"];
-
-const carouselItems = [...coursesData, ...coursesData, ...coursesData].slice(0, 8).map((c, index) => ({
-  id: c.slug,
-  title: c.headline || c.name,
-  description: c.description,
-  instructor: TRAINER_NAMES[index % TRAINER_NAMES.length],
-  price: c.price,
-  rating: 4.8,
-  students: c.enrolledStudents || "1,200",
-  image: c.thumbnail || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?q=80&w=800&auto=format&fit=crop",
-  duration: c.duration || "Self Paced",
-  uniqueKey: `${c.slug}-${index}`
-}));
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const result = [];
@@ -33,6 +17,29 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 }
 
 export default function FeaturedCarousel() {
+  const [carouselItems, setCarouselItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/courses/featured")
+      .then((res) => res.json())
+      .then((body) => {
+        const courses = body.data ?? [];
+        const items = [...courses, ...courses, ...courses].slice(0, 8).map((c, index) => ({
+          id: c.slug,
+          title: c.subtitle || c.title,
+          description: c.description,
+          instructor: c.trainer?.name ?? "AnalogueShifts",
+          price: c.price === 0 ? "Free" : `$${c.price}`,
+          rating: c.avgRating || 4.8,
+          students: c.reviewCount || "—",
+          image: c.thumbnailUrl || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?q=80&w=800&auto=format&fit=crop",
+          duration: c.totalDuration || "Self Paced",
+          uniqueKey: `${c.slug}-${index}`,
+        }));
+        setCarouselItems(items);
+      });
+  }, []);
+
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true, align: "start", slidesToScroll: 1 },
     [Autoplay({ delay: 4000 })]
@@ -40,6 +47,8 @@ export default function FeaturedCarousel() {
 
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+
+  if (carouselItems.length === 0) return null;
 
   return (
     <section id="featured-courses" className="py-16 lg:py-20 px-6 lg:px-24 bg-white max-w-[1800px] mx-auto">

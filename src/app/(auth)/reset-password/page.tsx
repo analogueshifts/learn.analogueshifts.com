@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,6 +26,8 @@ const resetPasswordSchema = z.object({
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
@@ -34,9 +36,25 @@ export default function ResetPasswordPage() {
   });
 
   async function onSubmit(values: z.infer<typeof resetPasswordSchema>) {
+    if (!token) {
+      form.setError("root", { message: "This reset link is missing its token." });
+      return;
+    }
+
     setIsLoading(true);
-    // Mock API call to reset password
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const response = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password: values.password }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      form.setError("root", { message: body?.error ?? "Could not reset password" });
+      setIsLoading(false);
+      return;
+    }
+
     router.push("/login?reset=success");
   }
 
@@ -75,6 +93,9 @@ export default function ResetPasswordPage() {
               </FormItem>
             )}
           />
+          {form.formState.errors.root && (
+            <p className="text-sm font-semibold text-red-500">{form.formState.errors.root.message}</p>
+          )}
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Resetting..." : "Reset Password"}
           </Button>

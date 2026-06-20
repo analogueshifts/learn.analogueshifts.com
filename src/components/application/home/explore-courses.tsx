@@ -1,9 +1,17 @@
 "use client";
+import { useEffect, useState } from "react";
 import Filter from "./filter";
-import courses from "@/resources/courses.json";
 import CourseCard from "../course-card";
 
 export default function ExploreCourses() {
+  const [courses, setCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/courses?limit=8")
+      .then((res) => res.json())
+      .then((body) => setCourses(body.data?.courses ?? []));
+  }, []);
+
   return (
     <section id="explore-courses" className="w-full flex justify-center">
       <div className="w-full items-start bg-white max-w-[1800px] large:px-[114px] px-[74px]  tablet:px-6 large:pt-[168px] pt-[70px] lg:pt-[118px] h-max flex large:gap-[109px] gap-[69px]">
@@ -30,17 +38,17 @@ export default function ExploreCourses() {
             </button>
           </div>
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-[43px] large:gap-y-16 gap-y-14">
-            {courses.map((course, index) => {
+            {courses.map((course) => {
               return (
                 <CourseCard
-                  key={index}
+                  key={course.id}
                   slug={course.slug}
-                  company={course.company}
+                  company={course.category?.name ?? "AnalogueShifts"}
                   description={course.description}
-                  duration={course.duration}
-                  name={course.name}
-                  price={course.price}
-                  thumbnail={course.thumbnail}
+                  duration={course.totalDuration}
+                  name={course.title}
+                  price={course.price === 0 ? "Free" : `$${course.price}`}
+                  thumbnail={course.thumbnailUrl}
                 />
               );
             })}

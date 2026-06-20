@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ResponsiveNavLink from "./responsive-navlink";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,19 +24,6 @@ export default function ResponsiveNavBar({
   handleLogout,
 }: Params) {
   const [showApps, setShowApps] = useState(false);
-  const [mockUser, setMockUser] = useState<any>(null);
-
-  const authLink = process.env.NEXT_PUBLIC_AUTH_URL;
-  const app = process.env.NEXT_PUBLIC_SITE_BUILD_UUID;
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('pendingUserRegistration');
-    if (storedUser) {
-      try {
-        setMockUser(JSON.parse(storedUser));
-      } catch (e) {}
-    }
-  }, []);
 
   const MenuLink = ({ item }: { item: any }) => (
     <div>
@@ -108,29 +95,6 @@ export default function ResponsiveNavBar({
             {user ? (
               <>
                 <ResponsiveNavLink onClick={handleLogout} href="">
-                  Logout
-                </ResponsiveNavLink>
-              </>
-            ) : mockUser ? (
-              <>
-                <ResponsiveNavLink 
-                  href={
-                    mockUser.role?.toLowerCase().includes('admin') ? '/admin' : 
-                    mockUser.role?.toLowerCase().includes('student') ? '/student/dashboard' : 
-                    '/trainer/dashboard'
-                  }
-                >
-                  {mockUser.role?.toLowerCase().includes('admin') ? 'Admin Dashboard' : 
-                   mockUser.role?.toLowerCase().includes('student') ? 'Student Dashboard' : 
-                   'Trainer Dashboard'}
-                </ResponsiveNavLink>
-                <ResponsiveNavLink 
-                  onClick={() => {
-                    localStorage.removeItem('pendingUserRegistration');
-                    window.location.href = '/';
-                  }} 
-                  href="#"
-                >
                   Logout
                 </ResponsiveNavLink>
               </>

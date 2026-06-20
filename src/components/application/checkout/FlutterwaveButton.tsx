@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Lock } from "lucide-react";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
@@ -8,27 +8,42 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 interface FlutterwaveButtonProps {
-  email: string;
-  name: string;
-  amount: number;
+  courseIds: string[];
+  couponCode: string | null;
   disabled?: boolean;
   onSuccess?: () => void;
 }
 
-export default function FlutterwaveButton({ email, name, amount, disabled, onSuccess }: FlutterwaveButtonProps) {
+export default function FlutterwaveButton({ courseIds, couponCode, disabled, onSuccess }: FlutterwaveButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initiating, setInitiating] = useState(true);
+  const [payment, setPayment] = useState<{ txRef: string; publicKey: string; amount: number; email: string; name: string } | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    setInitiating(true);
+    fetch("/api/payment/flutterwave/initiate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseIds, couponCode: couponCode ?? undefined }),
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setPayment(body.data);
+      })
+      .finally(() => setInitiating(false));
+  }, [courseIds, couponCode]);
+
   const config = {
-    public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "FLWPUBK_TEST-placeholder",
-    tx_ref: Date.now().toString(),
-    amount,
+    public_key: payment?.publicKey || "FLWPUBK_TEST-placeholder",
+    tx_ref: payment?.txRef ?? "",
+    amount: payment?.amount ?? 0,
     currency: "USD",
     payment_options: "card,mobilemoney,ussd",
     customer: {
-      email,
+      email: payment?.email ?? "",
       phone_number: "",
-      name,
+      name: payment?.name ?? "",
     },
     customizations: {
       title: "Analogue Shifts",
@@ -40,20 +55,33 @@ export default function FlutterwaveButton({ email, name, amount, disabled, onSuc
   const handleFlutterPayment = useFlutterwave(config);
 
   const handlePayment = () => {
+    if (!payment) return;
     setIsProcessing(true);
     handleFlutterPayment({
-      callback: (response) => {
+      callback: async (response) => {
         setIsProcessing(true);
-        if (response.status === "successful") {
-          toast.success("Payment successful! Verifying...");
-          if (onSuccess) onSuccess();
-          setTimeout(() => {
-            router.push(`/checkout/success?ref=${response.tx_ref}`);
-          }, 1500);
-        } else {
-          router.push(`/checkout/failed?reason=payment_failed`);
-        }
         closePaymentModal();
+
+        if (response.status !== "successful") {
+          router.push(`/checkout/failed?reason=payment_failed`);
+          return;
+        }
+
+        const verifyResponse = await fetch("/api/payment/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference: response.tx_ref }),
+        });
+
+        if (!verifyResponse.ok) {
+          toast.error("We couldn't verify your payment. Contact support if you were charged.");
+          router.push(`/checkout/failed?reason=verification_failed`);
+          return;
+        }
+
+        toast.success("Payment successful!");
+        onSuccess?.();
+        router.push(`/checkout/success?ref=${response.tx_ref}`);
       },
       onClose: () => {
         setIsProcessing(false);
@@ -63,13 +91,13 @@ export default function FlutterwaveButton({ email, name, amount, disabled, onSuc
   };
 
   return (
-    <Button 
-      onClick={handlePayment} 
-      disabled={disabled || isProcessing}
+    <Button
+      onClick={handlePayment}
+      disabled={disabled || isProcessing || initiating || !payment}
       className="w-full h-14 text-lg font-bold bg-[#F5A623] hover:bg-[#F5A623]/90 text-white rounded-xl shadow-lg"
     >
-      {isProcessing ? (
-        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
+      {isProcessing || initiating ? (
+        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> {initiating ? "Preparing..." : "Processing..."}</>
       ) : (
         <><Lock className="w-5 h-5 mr-2" /> Pay with Flutterwave</>
       )}

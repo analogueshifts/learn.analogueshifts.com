@@ -1,5 +1,4 @@
 "use client";
-import { useAuth } from "@/hooks/auth";
 import { Fragment, useRef, useState } from "react";
 
 import { Transition, Dialog } from "@headlessui/react";
@@ -10,20 +9,21 @@ import Spinner from "@/assets/images/spinner.svg";
 export default function LogoutConfirmation({
   open,
   close,
+  onConfirm,
 }: {
   open: boolean;
   close: () => void;
+  onConfirm: () => void | Promise<void>;
 }) {
   const cancelButtonRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  const { logout } = useAuth();
-
   const handleLogout = async () => {
+    setLoading(true);
     try {
-      await logout({ setLoading });
-      close();
-    } catch (error) {
+      await onConfirm();
+    } finally {
+      setLoading(false);
       close();
     }
   };

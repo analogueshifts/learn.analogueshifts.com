@@ -1,12 +1,18 @@
-import coursesData from "@/resources/courses.json";
 import GuestLayout from "@/components/application/layouts/guest";
 import CoursesBrowser from "@/components/application/courses/CoursesBrowser";
+import { prisma } from "@/lib/prisma";
+import { mapApiCourseToLegacy } from "@/lib/course-adapter";
 
-// Server Component for the listing page
-export default function CoursesPage() {
+export default async function CoursesPage() {
+  const courses = await prisma.course.findMany({
+    where: { status: "LIVE" },
+    include: { category: true, trainer: { select: { id: true, name: true, avatar: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <GuestLayout>
-      <CoursesBrowser initialCourses={coursesData} />
+      <CoursesBrowser initialCourses={courses.map(mapApiCourseToLegacy)} />
     </GuestLayout>
   );
 }

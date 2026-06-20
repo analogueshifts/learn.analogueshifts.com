@@ -61,15 +61,11 @@ export default function LoggedInProfileDropdown({
         <Avatar className="w-7 h-7">
           <AvatarImage
             className="object-cover"
-            src={
-              user?.user?.user_profile?.avatar
-                ? user.user.user_profile.avatar
-                : null
-            }
+            src={user?.image ?? undefined}
             alt="Profile"
           />
           <AvatarFallback className="bg-[#ffbb0a] text-white text-sm font-bold ">
-            {user?.user?.email?.slice(0, 1)?.toUpperCase()}
+            {(user?.name ?? user?.email)?.slice(0, 1)?.toUpperCase()}
           </AvatarFallback>
         </Avatar>
 

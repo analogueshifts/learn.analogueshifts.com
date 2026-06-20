@@ -32,8 +32,11 @@ export default function ForgotPasswordPage() {
 
   async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
     setIsLoading(true);
-    // Mock API call to send reset email
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
     setIsSubmitted(true);
     setIsLoading(false);
   }

@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  TRAINER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  name          String
+  avatar        String?
+  role          Role      @default(STUDENT)
+  bio           String?
+  location      String?
+  jobTitle      String?
+  skills        String[]  @default([])
+  linkedin      String?
+  twitter       String?
+  github        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  courses     Course[]
+  reviews     Review[]
+  wishlists   Wishlist[]
+  orders      Order[]
+  enrollments Enrollment[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum CourseStatus {
+  DRAFT
+  PENDING
+  LIVE
+  ARCHIVED
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum LessonType {
+  VIDEO
+  ARTICLE
+  QUIZ
+  ASSIGNMENT
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  iconUrl String?
+  courses Course[]
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  title         String
+  subtitle      String?
+  description   String
+  thumbnailUrl  String?
+  previewUrl    String?
+  price         Int          @default(0)
+  level         SkillLevel   @default(BEGINNER)
+  language      String       @default("English")
+  status        CourseStatus @default(DRAFT)
+  isFeatured    Boolean      @default(false)
+  totalDuration String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  trainerId String
+  trainer   User   @relation(fields: [trainerId], references: [id])
+
+  sections    Section[]
+  reviews     Review[]
+  wishlists   Wishlist[]
+  orderItems  OrderItem[]
+  enrollments Enrollment[]
+  coupons     Coupon[]
+
+  @@index([categoryId])
+  @@index([trainerId])
+}
+
+model Section {
+  id    String @id @default(cuid())
+  title String
+  order Int    @default(0)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  lessons Lesson[]
+
+  @@index([courseId])
+}
+
+model Lesson {
+  id            String     @id @default(cuid())
+  title         String
+  type          LessonType @default(VIDEO)
+  videoUrl      String?
+  duration      String?
+  description   String?
+  isFreePreview Boolean    @default(false)
+  order         Int        @default(0)
+  content       Json?
+
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  rating       Int
+  body         String?
+  helpfulCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@index([courseId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+enum PaymentGateway {
+  PAYSTACK
+  FLUTTERWAVE
+  STRIPE
+}
+
+enum OrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Order {
+  id          String         @id @default(cuid())
+  totalAmount Int
+  currency    String         @default("USD")
+  gateway     PaymentGateway
+  gatewayRef  String?
+  status      OrderStatus    @default(PENDING)
+  invoiceUrl  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+
+  items       OrderItem[]
+  enrollments Enrollment[]
+  refunds     Refund[]
+
+  @@unique([gateway, gatewayRef])
+  @@index([userId])
+}
+
+model OrderItem {
+  id    String @id @default(cuid())
+  price Int
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  @@unique([orderId, courseId])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  enrolledAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Int
+  expiresAt     DateTime?
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  createdAt     DateTime     @default(now())
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id])
+
+  orders Order[]
+}
+
+model Refund {
+  id          String       @id @default(cuid())
+  reason      String
+  status      RefundStatus @default(PENDING)
+  requestedAt DateTime     @default(now())
+  processedAt DateTime?
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+}

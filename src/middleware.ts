@@ -7,27 +7,23 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Protect Trainer routes
-    if (path.startsWith("/trainer") && token?.role !== "Trainer" && token?.role !== "Admin") {
+    if (path.startsWith("/trainer") && token?.role !== "TRAINER" && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // Protect Admin routes (Temporarily disabled for design preview)
-    // if (path.startsWith("/admin") && token?.role !== "Admin") {
-    //   return NextResponse.redirect(new URL("/login", req.url));
-    // }
+    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      // Return true if the user is authorized (has a token).
-      // The middleware function above will handle role-specific logic.
       authorized: ({ token }) => !!token,
     },
   }
 );
 
 export const config = {
-  matcher: [], // Temporarily disabled for design preview
+  matcher: ["/trainer/:path*", "/admin/:path*"],
 };

@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 
 interface CourseActionButtonsProps {
   course: {
+    id: string;
     slug: string;
     name: string;
     price: string;
@@ -20,23 +21,20 @@ export default function CourseActionButtons({ course, variant = "floating" }: Co
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
 
+  const cartItem = {
+    id: course.id,
+    name: course.name,
+    price: parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0,
+    image: course.thumbnail || "/courses/placeholder.jpg",
+  };
+
   const handleAddToCart = () => {
-    addItem({
-      id: course.slug,
-      name: course.name,
-      price: parseFloat(course.price.replace(/[^0-9.]/g, '')),
-      image: course.thumbnail || "/courses/placeholder.jpg"
-    });
+    addItem(cartItem);
     toast.success("Course added to cart!");
   };
 
   const handleBuyNow = () => {
-    addItem({
-      id: course.slug,
-      name: course.name,
-      price: parseFloat(course.price.replace(/[^0-9.]/g, '')),
-      image: course.thumbnail || "/courses/placeholder.jpg"
-    });
+    addItem(cartItem);
     router.push("/checkout");
   };
 

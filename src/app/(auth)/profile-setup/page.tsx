@@ -48,6 +48,18 @@ export default function ProfileSetupPage() {
     },
   });
 
+  const [pendingRegistration, setPendingRegistration] = useState<{name: string, email: string, role: string} | null>(null);
+
+  // Initialize from localStorage
+  useEffect(() => {
+    const data = localStorage.getItem('pendingUserRegistration');
+    if (data) {
+      const parsed = JSON.parse(data);
+      setPendingRegistration(parsed);
+      form.setValue("name", parsed.name);
+    }
+  }, [form]);
+
   if (status === "loading") {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
@@ -93,43 +105,25 @@ export default function ProfileSetupPage() {
     form.setValue("skills", newSkills.join(", "));
   };
 
-  const [pendingRegistration, setPendingRegistration] = useState<{name: string, email: string, role: string} | null>(null);
-
-  // Initialize from localStorage
-  useEffect(() => {
-    const data = localStorage.getItem('pendingUserRegistration');
-    if (data) {
-      const parsed = JSON.parse(data);
-      setPendingRegistration(parsed);
-      form.setValue("name", parsed.name);
-    }
-  }, [form]);
-
   async function onSubmit(values: z.infer<typeof profileSchema>) {
     setIsLoading(true);
-    
-    // If user is registering as Trainer, create a mock application in localStorage
-    if (pendingRegistration?.role === "Trainer") {
-      const existingAppsStr = localStorage.getItem("mockTrainerApplications");
-      const existingApps = existingAppsStr ? JSON.parse(existingAppsStr) : [];
-      
-      const newApplication = {
-        id: `app_mock_${Date.now()}`,
-        name: values.name,
-        email: pendingRegistration.email,
-        expertise: values.skills?.split(',')[0] || "General Instruction", // first skill as expertise
-        experience: values.bio ? "Detailed bio provided" : "New Instructor",
-        status: "Pending",
-        appliedDate: new Date().toISOString().split('T')[0]
-      };
-      
-      localStorage.setItem("mockTrainerApplications", JSON.stringify([...existingApps, newApplication]));
-    }
 
-    // Mock API call to update profile
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Redirect based on role
+    await fetch("/api/user/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: values.name,
+        bio: values.bio,
+        linkedin: values.linkedin || undefined,
+        github: values.github || undefined,
+        skills: values.skills
+          ? values.skills.split(",").map((s) => s.trim()).filter(Boolean)
+          : [],
+      }),
+    });
+
+    localStorage.removeItem("pendingUserRegistration");
+
     if (pendingRegistration?.role === "Trainer") {
       router.push("/trainer/dashboard");
     } else {

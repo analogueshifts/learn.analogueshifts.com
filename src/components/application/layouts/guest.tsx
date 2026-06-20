@@ -1,9 +1,7 @@
 "use client";
-import { useUser } from "@/contexts/user";
-import { useAuth } from "@/hooks/auth";
-import { useState, useEffect, Suspense } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useState, Suspense } from "react";
 
-import Cookies from "js-cookie";
 import GuestNavigation from "../guest-navigation";
 import LogoutConfirmation from "../logout-confirmation";
 import Footer from "../footer";
@@ -13,16 +11,8 @@ export default function GuestLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useUser();
-  const { getUser } = useAuth();
+  const { data: session } = useSession();
   const [idiomModalDisplay, setIdiomModalDisplay] = useState(false);
-
-  useEffect(() => {
-    const token = Cookies.get("analogueshifts");
-    if (token) {
-      getUser({ setLoading: (loading) => {}, layout: "guest", token });
-    }
-  }, []);
 
   return (
     <Suspense>
@@ -30,10 +20,11 @@ export default function GuestLayout({
         <LogoutConfirmation
           close={() => setIdiomModalDisplay(false)}
           open={idiomModalDisplay}
+          onConfirm={() => signOut({ callbackUrl: "/" })}
         />
         <GuestNavigation
           handleLogout={() => setIdiomModalDisplay(true)}
-          user={user}
+          user={session?.user ?? null}
         />
 
         <div className="w-full pt-16">{children}</div>
