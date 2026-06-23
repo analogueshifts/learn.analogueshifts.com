@@ -7,12 +7,42 @@ export async function GET() {
   const admin = await requireAdmin();
   if (!admin) return apiError("Forbidden", 403);
 
-  const payouts = await prisma.payout.findMany({
-    include: { trainer: { select: { id: true, name: true, email: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [payouts, trainers, orderItems, paidPayouts] = await Promise.all([
+    prisma.payout.findMany({
+      include: { trainer: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: { role: "TRAINER" },
+      select: { id: true, name: true, email: true, trainerProfile: { select: { commissionRate: true } } },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { status: "SUCCESS" } },
+      select: { price: true, course: { select: { trainerId: true } } },
+    }),
+    prisma.payout.findMany({ where: { status: "PAID" }, select: { trainerId: true, amount: true } }),
+  ]);
 
-  return apiSuccess(payouts);
+  const grossByTrainer = orderItems.reduce<Record<string, number>>((acc, item) => {
+    acc[item.course.trainerId] = (acc[item.course.trainerId] ?? 0) + item.price;
+    return acc;
+  }, {});
+  const paidByTrainer = paidPayouts.reduce<Record<string, number>>((acc, p) => {
+    acc[p.trainerId] = (acc[p.trainerId] ?? 0) + p.amount;
+    return acc;
+  }, {});
+
+  const trainerBalances = trainers
+    .map((trainer) => {
+      const gross = grossByTrainer[trainer.id] ?? 0;
+      const commissionRate = trainer.trainerProfile?.commissionRate ?? 0.7;
+      const earned = Math.round(gross * commissionRate);
+      const pendingBalance = earned - (paidByTrainer[trainer.id] ?? 0);
+      return { id: trainer.id, name: trainer.name, email: trainer.email, pendingBalance };
+    })
+    .filter((t) => t.pendingBalance > 0);
+
+  return apiSuccess({ payouts, trainerBalances });
 }
 
 const createPayoutSchema = z.object({

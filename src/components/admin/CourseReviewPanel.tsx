@@ -14,7 +14,7 @@ export interface CourseData {
   category: string
   price: number
   description: string
-  status: "Pending" | "Draft" | "Live" | "Archived"
+  status: "PENDING" | "DRAFT" | "LIVE" | "ARCHIVED"
   submittedAt: string
 }
 

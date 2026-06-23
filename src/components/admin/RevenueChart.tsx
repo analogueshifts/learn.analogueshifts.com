@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   LineChart,
   Line,
@@ -21,42 +21,41 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const dummyDataDaily = [
-  { name: "Mon", paystack: 4000, flutterwave: 2400 },
-  { name: "Tue", paystack: 3000, flutterwave: 1398 },
-  { name: "Wed", paystack: 2000, flutterwave: 9800 },
-  { name: "Thu", paystack: 2780, flutterwave: 3908 },
-  { name: "Fri", paystack: 1890, flutterwave: 4800 },
-  { name: "Sat", paystack: 2390, flutterwave: 3800 },
-  { name: "Sun", paystack: 3490, flutterwave: 4300 },
-]
+export interface RevenueTransaction {
+  amount: number
+  gateway: string
+  date: string
+  status: string
+}
 
-const dummyDataWeekly = [
-  { name: "Week 1", paystack: 14000, flutterwave: 12400 },
-  { name: "Week 2", paystack: 13000, flutterwave: 11398 },
-  { name: "Week 3", paystack: 12000, flutterwave: 19800 },
-  { name: "Week 4", paystack: 12780, flutterwave: 13908 },
-]
+function groupTransactions(transactions: RevenueTransaction[], timeframe: "daily" | "weekly" | "monthly") {
+  const successful = transactions.filter((t) => t.status === "SUCCESS")
+  const groups: Record<string, { paystack: number; flutterwave: number; stripe: number }> = {}
 
-const dummyDataMonthly = [
-  { name: "Jan", paystack: 44000, flutterwave: 42400 },
-  { name: "Feb", paystack: 43000, flutterwave: 41398 },
-  { name: "Mar", paystack: 42000, flutterwave: 49800 },
-  { name: "Apr", paystack: 42780, flutterwave: 43908 },
-  { name: "May", paystack: 41890, flutterwave: 44800 },
-  { name: "Jun", paystack: 42390, flutterwave: 43800 },
-]
+  for (const tx of successful) {
+    const date = new Date(tx.date)
+    let key: string
+    if (timeframe === "daily") {
+      key = date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+    } else if (timeframe === "weekly") {
+      const week = Math.ceil(date.getDate() / 7)
+      key = `${date.toLocaleDateString(undefined, { month: "short" })} Wk${week}`
+    } else {
+      key = date.toLocaleDateString(undefined, { month: "short", year: "numeric" })
+    }
+    if (!groups[key]) groups[key] = { paystack: 0, flutterwave: 0, stripe: 0 }
+    const gatewayKey = tx.gateway.toLowerCase() as "paystack" | "flutterwave" | "stripe"
+    if (gatewayKey in groups[key]) groups[key][gatewayKey] += tx.amount
+  }
 
-export function RevenueChart() {
+  return Object.entries(groups).map(([name, values]) => ({ name, ...values }))
+}
+
+export function RevenueChart({ transactions = [] }: { transactions?: RevenueTransaction[] }) {
   const [timeframe, setTimeframe] = useState<"daily" | "weekly" | "monthly">("daily")
   const [gateway, setGateway] = useState<"all" | "paystack" | "flutterwave">("all")
 
-  const data =
-    timeframe === "daily"
-      ? dummyDataDaily
-      : timeframe === "weekly"
-      ? dummyDataWeekly
-      : dummyDataMonthly
+  const data = useMemo(() => groupTransactions(transactions, timeframe), [transactions, timeframe])
 
   return (
     <Card className="col-span-1 lg:col-span-2">

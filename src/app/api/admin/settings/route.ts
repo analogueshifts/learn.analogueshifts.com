@@ -8,12 +8,20 @@ export async function GET() {
   if (!admin) return apiError("Forbidden", 403);
 
   const settings = await prisma.platformSetting.findMany();
-  return apiSuccess(
-    settings.reduce<Record<string, unknown>>((acc, s) => {
-      acc[s.key] = s.value;
-      return acc;
-    }, {})
-  );
+  const data = settings.reduce<Record<string, unknown>>((acc, s) => {
+    acc[s.key] = s.value;
+    return acc;
+  }, {});
+
+  // Whether each gateway's secret key is actually configured server-side (env vars), never the values
+  // themselves -- the real payment routes always read from process.env, not from admin-editable settings.
+  data.gatewayStatus = {
+    paystack: !!process.env.PAYSTACK_SECRET_KEY,
+    flutterwave: !!process.env.FLUTTERWAVE_SECRET_KEY,
+    stripe: !!process.env.STRIPE_SECRET_KEY,
+  };
+
+  return apiSuccess(data);
 }
 
 const updateSettingSchema = z.object({

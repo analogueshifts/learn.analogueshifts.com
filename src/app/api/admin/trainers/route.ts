@@ -16,11 +16,19 @@ export async function GET() {
       createdAt: true,
       trainerProfile: true,
       _count: { select: { courses: true } },
+      courses: { select: { reviews: { select: { rating: true } } } },
     },
     orderBy: { createdAt: "desc" },
   });
 
   return apiSuccess(
-    trainers.map(({ _count, ...trainer }) => ({ ...trainer, courseCount: _count.courses }))
+    trainers.map(({ _count, courses, ...trainer }) => {
+      const ratings = courses.flatMap((c) => c.reviews.map((r) => r.rating));
+      return {
+        ...trainer,
+        courseCount: _count.courses,
+        avgRating: ratings.length ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0,
+      };
+    })
   );
 }

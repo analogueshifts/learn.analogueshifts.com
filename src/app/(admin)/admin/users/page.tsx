@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   ColumnDef,
   flexRender,
@@ -10,7 +10,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, UserPlus, Search, Shield, Ban, CheckCircle, Mail, GraduationCap } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, UserPlus, Search, Shield, Ban, CheckCircle, Mail, GraduationCap, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -48,51 +48,74 @@ export type User = {
   id: string
   name: string
   email: string
-  role: "Admin" | "Trainer" | "Student"
-  status: "Active" | "Suspended" | "Banned"
-  joinDate: string
+  role: "ADMIN" | "TRAINER" | "STUDENT"
+  status: "ACTIVE" | "SUSPENDED" | "BANNED"
+  createdAt: string
 }
 
-const initialData: User[] = [
-  { id: "1", name: "Alice Smith", email: "alice@example.com", role: "Student", status: "Active", joinDate: "2024-01-15" },
-  { id: "2", name: "Bob Jones", email: "bob@example.com", role: "Trainer", status: "Active", joinDate: "2023-11-02" },
-  { id: "3", name: "Charlie Brown", email: "charlie@example.com", role: "Student", status: "Suspended", joinDate: "2024-02-20" },
-  { id: "4", name: "Diana Prince", email: "diana@example.com", role: "Admin", status: "Active", joinDate: "2022-05-10" },
-  { id: "5", name: "Evan Wright", email: "evan.w@example.com", role: "Student", status: "Banned", joinDate: "2024-03-01" },
-  { id: "6", name: "Fiona Gallagher", email: "fiona@example.com", role: "Trainer", status: "Active", joinDate: "2023-08-14" },
-]
-
 export default function UsersPage() {
-  const [data, setData] = useState<User[]>(initialData)
+  const [data, setData] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  
-  // Add User State
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((res) => res.json())
+      .then((body) => body.success && setData(body.data))
+      .finally(() => setIsLoading(false))
+  }, [])
+
   const [isAddOpen, setIsAddOpen] = useState(false)
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "Student" })
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "STUDENT" })
+  const [isCreating, setIsCreating] = useState(false)
 
-  const handleAddUser = () => {
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role as "Admin" | "Trainer" | "Student",
-      status: "Active",
-      joinDate: new Date().toISOString().split('T')[0]
+  const handleAddUser = async () => {
+    setIsCreating(true)
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUser),
+    })
+    const body = await response.json()
+    setIsCreating(false)
+    if (body.success) {
+      setData([body.data, ...data])
+      setIsAddOpen(false)
+      setNewUser({ name: "", email: "", password: "", role: "STUDENT" })
+      toast.success("User added successfully!")
+    } else {
+      toast.error(body.error ?? "Failed to create user")
     }
-    setData([user, ...data])
-    setIsAddOpen(false)
-    setNewUser({ name: "", email: "", password: "", role: "Student" })
-    toast.success("User added successfully!")
   }
 
-  const handleStatusChange = (id: string, newStatus: User["status"]) => {
-    setData(data.map(u => u.id === id ? { ...u, status: newStatus } : u))
-    toast.success(`User status changed to ${newStatus}`)
+  const handleStatusChange = async (id: string, newStatus: User["status"]) => {
+    const response = await fetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    })
+    const body = await response.json()
+    if (body.success) {
+      setData(data.map(u => u.id === id ? body.data : u))
+      toast.success(`User status changed to ${newStatus}`)
+    } else {
+      toast.error(body.error ?? "Failed to update status")
+    }
   }
 
-  const handleRoleChange = (id: string, newRole: User["role"]) => {
-    setData(data.map(u => u.id === id ? { ...u, role: newRole } : u))
-    toast.success(`User promoted to ${newRole}`)
+  const handleRoleChange = async (id: string, newRole: User["role"]) => {
+    const response = await fetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole }),
+    })
+    const body = await response.json()
+    if (body.success) {
+      setData(data.map(u => u.id === id ? body.data : u))
+      toast.success(`User promoted to ${newRole}`)
+    } else {
+      toast.error(body.error ?? "Failed to update role")
+    }
   }
 
   const columns: ColumnDef<User>[] = [
@@ -118,7 +141,7 @@ export default function UsersPage() {
     {
       accessorKey: "email",
       header: "Email",
-      cell: ({ row }) => <div className="text-muted-foreground hidden">{row.getValue("email")}</div>, // Hidden but searchable
+      cell: ({ row }) => <div className="text-muted-foreground hidden">{row.getValue("email")}</div>,
     },
     {
       accessorKey: "role",
@@ -128,11 +151,11 @@ export default function UsersPage() {
         return (
           <Badge variant="outline" className={`
             font-medium px-2.5 py-0.5 border
-            ${role === 'Admin' ? 'bg-[#0F2942]/10 text-[#0F2942] border-[#0F2942]/20 dark:bg-[#FFBB0A]/10 dark:text-[#FFBB0A] dark:border-[#FFBB0A]/20' : ''}
-            ${role === 'Trainer' ? 'bg-purple-500/10 text-purple-700 border-purple-200 dark:text-purple-400 dark:border-purple-500/30' : ''}
-            ${role === 'Student' ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' : ''}
+            ${role === 'ADMIN' ? 'bg-[#0F2942]/10 text-[#0F2942] border-[#0F2942]/20 dark:bg-[#FFBB0A]/10 dark:text-[#FFBB0A] dark:border-[#FFBB0A]/20' : ''}
+            ${role === 'TRAINER' ? 'bg-purple-500/10 text-purple-700 border-purple-200 dark:text-purple-400 dark:border-purple-500/30' : ''}
+            ${role === 'STUDENT' ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' : ''}
           `}>
-            {role === 'Admin' && <Shield className="w-3 h-3 mr-1" />}
+            {role === 'ADMIN' && <Shield className="w-3 h-3 mr-1" />}
             {role}
           </Badge>
         )
@@ -146,8 +169,8 @@ export default function UsersPage() {
         return (
           <div className="flex items-center">
             <span className={`h-2 w-2 rounded-full mr-2 ${
-              status === 'Active' ? 'bg-emerald-500' : 
-              status === 'Suspended' ? 'bg-[#FFBB0A]' : 'bg-destructive'
+              status === 'ACTIVE' ? 'bg-emerald-500' :
+              status === 'SUSPENDED' ? 'bg-[#FFBB0A]' : 'bg-destructive'
             }`} />
             <span className="text-sm font-medium text-muted-foreground">{status}</span>
           </div>
@@ -155,7 +178,7 @@ export default function UsersPage() {
       },
     },
     {
-      accessorKey: "joinDate",
+      accessorKey: "createdAt",
       header: ({ column }) => {
         return (
           <Button
@@ -170,7 +193,7 @@ export default function UsersPage() {
       },
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.getValue("joinDate")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          {new Date(row.getValue("createdAt")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
       )
     },
@@ -196,30 +219,30 @@ export default function UsersPage() {
                   <Mail className="mr-2 h-4 w-4" /> Copy Email
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                
-                {user.role !== "Admin" && (
+
+                {user.role !== "ADMIN" && (
                   <>
-                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "Trainer")}>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "TRAINER")}>
                       <GraduationCap className="mr-2 h-4 w-4" /> Promote to Trainer
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "Admin")}>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "ADMIN")}>
                       <Shield className="mr-2 h-4 w-4" /> Make Admin
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
 
-                {user.status === "Active" ? (
+                {user.status === "ACTIVE" ? (
                   <>
-                    <DropdownMenuItem className="text-amber-600 focus:bg-amber-50 focus:text-amber-700 dark:focus:bg-amber-950/50 dark:focus:text-amber-500" onClick={() => handleStatusChange(user.id, "Suspended")}>
+                    <DropdownMenuItem className="text-amber-600 focus:bg-amber-50 focus:text-amber-700 dark:focus:bg-amber-950/50 dark:focus:text-amber-500" onClick={() => handleStatusChange(user.id, "SUSPENDED")}>
                       Suspend User
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => handleStatusChange(user.id, "Banned")}>
+                    <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => handleStatusChange(user.id, "BANNED")}>
                       <Ban className="mr-2 h-4 w-4" /> Ban User
                     </DropdownMenuItem>
                   </>
                 ) : (
-                  <DropdownMenuItem className="text-emerald-600 focus:bg-emerald-50 focus:text-emerald-700 dark:focus:bg-emerald-950/50 dark:focus:text-emerald-500" onClick={() => handleStatusChange(user.id, "Active")}>
+                  <DropdownMenuItem className="text-emerald-600 focus:bg-emerald-50 focus:text-emerald-700 dark:focus:bg-emerald-950/50 dark:focus:text-emerald-500" onClick={() => handleStatusChange(user.id, "ACTIVE")}>
                     <CheckCircle className="mr-2 h-4 w-4" /> Reactivate User
                   </DropdownMenuItem>
                 )}
@@ -260,7 +283,6 @@ export default function UsersPage() {
       </div>
 
       <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex flex-col">
-        {/* Table Toolbar */}
         <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/10">
           <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -280,9 +302,9 @@ export default function UsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Trainer">Trainer</SelectItem>
-                <SelectItem value="Student">Student</SelectItem>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="TRAINER">Trainer</SelectItem>
+                <SelectItem value="STUDENT">Student</SelectItem>
               </SelectContent>
             </Select>
             <CSVLink data={data} filename={"platform-users-export.csv"}>
@@ -291,7 +313,6 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/30">
@@ -313,7 +334,9 @@ export default function UsersPage() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                <TableRow><TableCell colSpan={columns.length} className="h-32 text-center"><Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -341,7 +364,6 @@ export default function UsersPage() {
           </Table>
         </div>
 
-        {/* Pagination */}
         <div className="p-4 border-t border-border/50 flex items-center justify-between bg-muted/10">
           <div className="text-sm text-muted-foreground">
             Showing {table.getRowModel().rows.length} of {data.length} users
@@ -409,7 +431,7 @@ export default function UsersPage() {
                 placeholder="e.g. TempPass123!"
                 className="h-10"
               />
-              <p className="text-[10px] text-muted-foreground">Provide this password to the user securely. They can change it later in their profile.</p>
+              <p className="text-[10px] text-muted-foreground">Provide this password to the user securely. They can change it later in their profile. Minimum 8 characters.</p>
             </div>
             <div className="grid gap-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">User Role</Label>
@@ -418,17 +440,17 @@ export default function UsersPage() {
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Student">Student (Default)</SelectItem>
-                  <SelectItem value="Trainer">Trainer</SelectItem>
-                  <SelectItem value="Admin">Administrator</SelectItem>
+                  <SelectItem value="STUDENT">Student (Default)</SelectItem>
+                  <SelectItem value="TRAINER">Trainer</SelectItem>
+                  <SelectItem value="ADMIN">Administrator</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter className="border-t border-border/50 pt-4 mt-2">
             <Button variant="ghost" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddUser} disabled={!newUser.name || !newUser.email || !newUser.password} className="bg-[#FFBB0A] hover:bg-[#EAB308] text-[#0F2942] font-bold">
-              Create User
+            <Button onClick={handleAddUser} disabled={!newUser.name || !newUser.email || newUser.password.length < 8 || isCreating} className="bg-[#FFBB0A] hover:bg-[#EAB308] text-[#0F2942] font-bold">
+              {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create User"}
             </Button>
           </DialogFooter>
         </DialogContent>

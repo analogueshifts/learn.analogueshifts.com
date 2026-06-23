@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   ColumnDef,
   flexRender,
@@ -10,7 +10,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, Search, Star, Users, CheckCircle, Clock, Archive, PenTool } from "lucide-react"
+import { MoreHorizontal, Search, Star, Users, CheckCircle, Clock, Archive, PenTool, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -38,29 +38,41 @@ import { CSVLink } from "react-csv"
 export type Course = {
   id: string
   title: string
-  trainer: string
+  trainer: { name: string }
   price: number
-  status: "Live" | "Pending" | "Draft" | "Archived"
-  enrolled: number
-  rating: number
+  status: "LIVE" | "PENDING" | "DRAFT" | "ARCHIVED"
+  enrolledCount: number
+  avgRating: number
   createdAt: string
 }
 
-const initialData: Course[] = [
-  { id: "c1", title: "Advanced React Patterns", trainer: "Bob Jones", price: 99.99, status: "Live", enrolled: 1250, rating: 4.8, createdAt: "2023-11-01" },
-  { id: "c2", title: "Figma to Webflow Masterclass", trainer: "Sarah Connor", price: 149.00, status: "Live", enrolled: 840, rating: 4.9, createdAt: "2023-12-15" },
-  { id: "c3", title: "Machine Learning Basics", trainer: "Fiona Gallagher", price: 199.99, status: "Pending", enrolled: 0, rating: 0, createdAt: "2024-03-20" },
-  { id: "c4", title: "Introduction to UI/UX", trainer: "Evan Wright", price: 49.99, status: "Draft", enrolled: 0, rating: 0, createdAt: "2024-04-01" },
-  { id: "c5", title: "Legacy PHP Development", trainer: "Bob Jones", price: 29.99, status: "Archived", enrolled: 4500, rating: 4.2, createdAt: "2021-06-10" },
-]
-
 export default function CoursesPage() {
-  const [data, setData] = useState<Course[]>(initialData)
+  const [data, setData] = useState<Course[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
-  const handleStatusChange = (id: string, newStatus: Course["status"]) => {
-    setData(data.map(c => c.id === id ? { ...c, status: newStatus } : c))
-    toast.success(`Course status updated to ${newStatus}`)
+  useEffect(() => {
+    fetch("/api/admin/courses")
+      .then((res) => res.json())
+      .then((body) => body.success && setData(body.data))
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const pendingCount = data.filter((c) => c.status === "PENDING").length
+
+  const handleStatusChange = async (id: string, newStatus: Course["status"]) => {
+    const response = await fetch(`/api/admin/courses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    })
+    const body = await response.json()
+    if (body.success) {
+      setData(data.map(c => c.id === id ? { ...c, status: body.data.status } : c))
+      toast.success(`Course status updated to ${newStatus}`)
+    } else {
+      toast.error(body.error ?? "Failed to update status")
+    }
   }
 
   const columns: ColumnDef<Course>[] = [
@@ -74,9 +86,10 @@ export default function CoursesPage() {
       ),
     },
     {
-      accessorKey: "trainer",
+      id: "trainer",
+      accessorFn: (row) => row.trainer.name,
       header: "Trainer",
-      cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("trainer")}</div>,
+      cell: ({ row }) => <div className="text-muted-foreground">{row.original.trainer.name}</div>,
     },
     {
       accessorKey: "status",
@@ -86,13 +99,13 @@ export default function CoursesPage() {
         return (
           <Badge variant="outline" className={`
             font-medium px-2.5 py-0.5 border
-            ${status === 'Live' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-500/30' : ''}
-            ${status === 'Pending' ? 'bg-[#FFBB0A]/10 text-[#876307] border-[#FFBB0A]/30 dark:text-[#FFBB0A] dark:border-[#FFBB0A]/20' : ''}
-            ${status === 'Draft' ? 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' : ''}
-            ${status === 'Archived' ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' : ''}
+            ${status === 'LIVE' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-500/30' : ''}
+            ${status === 'PENDING' ? 'bg-[#FFBB0A]/10 text-[#876307] border-[#FFBB0A]/30 dark:text-[#FFBB0A] dark:border-[#FFBB0A]/20' : ''}
+            ${status === 'DRAFT' ? 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' : ''}
+            ${status === 'ARCHIVED' ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' : ''}
           `}>
-            {status === 'Live' && <CheckCircle className="w-3 h-3 mr-1" />}
-            {status === 'Pending' && <Clock className="w-3 h-3 mr-1" />}
+            {status === 'LIVE' && <CheckCircle className="w-3 h-3 mr-1" />}
+            {status === 'PENDING' && <Clock className="w-3 h-3 mr-1" />}
             {status}
           </Badge>
         )
@@ -102,28 +115,24 @@ export default function CoursesPage() {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("price"))
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(amount)
+        const amount = row.getValue("price") as number
+        const formatted = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
         return <div className="font-medium text-muted-foreground">{formatted}</div>
       },
     },
     {
-      accessorKey: "metrics",
+      id: "metrics",
       header: "Metrics",
       cell: ({ row }) => {
-        const enrolled = row.original.enrolled
-        const rating = row.original.rating
+        const { enrolledCount, avgRating } = row.original
         return (
           <div className="flex flex-col gap-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" /> {enrolled.toLocaleString()} students
+              <Users className="h-3 w-3" /> {enrolledCount.toLocaleString()} students
             </div>
-            {rating > 0 && (
+            {avgRating > 0 && (
               <div className="flex items-center gap-1 text-[#FFBB0A]">
-                <Star className="h-3 w-3 fill-current" /> {rating.toFixed(1)} rating
+                <Star className="h-3 w-3 fill-current" /> {avgRating.toFixed(1)} rating
               </div>
             )}
           </div>
@@ -145,44 +154,28 @@ export default function CoursesPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Course Actions</DropdownMenuLabel>
-                
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/courses/${course.id}`} className="cursor-pointer">
-                    <Search className="mr-2 h-4 w-4" /> View Details
-                  </Link>
-                </DropdownMenuItem>
+
+                {course.status === "PENDING" && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/courses/review" className="cursor-pointer text-[#0F2942]">
+                      <Clock className="mr-2 h-4 w-4" /> Open in Review Queue
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator />
 
-                {course.status === "Pending" && (
-                  <>
-                    <DropdownMenuItem 
-                      className="text-emerald-600 focus:bg-emerald-50"
-                      onClick={() => handleStatusChange(course.id, "Live")}
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" /> Approve Course
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive focus:bg-destructive/10"
-                      onClick={() => handleStatusChange(course.id, "Draft")}
-                    >
-                      <PenTool className="mr-2 h-4 w-4" /> Request Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-
-                {course.status !== "Archived" ? (
-                  <DropdownMenuItem 
+                {course.status !== "ARCHIVED" ? (
+                  <DropdownMenuItem
                     className="text-muted-foreground focus:bg-muted"
-                    onClick={() => handleStatusChange(course.id, "Archived")}
+                    onClick={() => handleStatusChange(course.id, "ARCHIVED")}
                   >
                     <Archive className="mr-2 h-4 w-4" /> Archive Course
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-[#FFBB0A] focus:bg-[#FFBB0A]/10"
-                    onClick={() => handleStatusChange(course.id, "Draft")}
+                    onClick={() => handleStatusChange(course.id, "DRAFT")}
                   >
                     <PenTool className="mr-2 h-4 w-4" /> Restore to Draft
                   </DropdownMenuItem>
@@ -210,21 +203,20 @@ export default function CoursesPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <Toaster position="top-right" />
-      
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-[#0F2942] dark:text-white">Course Management</h1>
-          <p className="text-muted-foreground mt-1">Monitor, approve, and manage the platform's curriculum.</p>
+          <p className="text-muted-foreground mt-1">Monitor, approve, and manage the platform&apos;s curriculum.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" className="shadow-sm border-[#0F2942]/20 text-[#0F2942] hover:bg-[#0F2942]/5 dark:border-border dark:text-foreground dark:hover:bg-muted/50">
-            <Link href="/admin/courses/review">Review Queue <Badge className="ml-2 bg-[#FFBB0A] text-[#0F2942]">1</Badge></Link>
+            <Link href="/admin/courses/review">Review Queue <Badge className="ml-2 bg-[#FFBB0A] text-[#0F2942]">{pendingCount}</Badge></Link>
           </Button>
         </div>
       </div>
 
       <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex flex-col">
-        {/* Table Toolbar */}
         <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/10">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -244,19 +236,18 @@ export default function CoursesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Live">Live</SelectItem>
-                <SelectItem value="Pending">Pending Review</SelectItem>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Archived">Archived</SelectItem>
+                <SelectItem value="LIVE">Live</SelectItem>
+                <SelectItem value="PENDING">Pending Review</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="ARCHIVED">Archived</SelectItem>
               </SelectContent>
             </Select>
-            <CSVLink data={data} filename={"platform-courses-export.csv"}>
+            <CSVLink data={data.map(c => ({ ...c, trainer: c.trainer.name }))} filename={"platform-courses-export.csv"}>
               <Button variant="outline" className="shrink-0">Export</Button>
             </CSVLink>
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/30">
@@ -271,7 +262,9 @@ export default function CoursesPage() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                <TableRow><TableCell colSpan={columns.length} className="h-32 text-center"><Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id} className="hover:bg-muted/20 transition-colors">
                     {row.getVisibleCells().map((cell) => (
@@ -292,7 +285,6 @@ export default function CoursesPage() {
           </Table>
         </div>
 
-        {/* Pagination */}
         <div className="p-4 border-t border-border/50 flex items-center justify-between bg-muted/10">
           <div className="text-sm text-muted-foreground">
             Showing {table.getRowModel().rows.length} of {data.length} courses

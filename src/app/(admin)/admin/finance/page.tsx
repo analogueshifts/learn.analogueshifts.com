@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, RefreshCw, Download, CheckCircle, XCircle } from "lucide-react"
+import { DollarSign, CreditCard, RefreshCw, Download, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,32 +17,77 @@ import {
 } from "@/components/ui/table"
 import toast, { Toaster } from "react-hot-toast"
 
-const gatewayData = [
-  { name: "Paystack", value: 65000 },
-  { name: "Flutterwave", value: 35000 },
-]
-const COLORS = ["#0F2942", "#FFBB0A"]
+const COLORS = ["#0F2942", "#FFBB0A", "#7C3AED"]
 
-const initialTransactions = [
-  { id: "TX123", user: "alice@example.com", amount: 49.99, gateway: "Paystack", date: "2023-11-06 10:23 AM", status: "Success" },
-  { id: "TX124", user: "bob@example.com", amount: 99.00, gateway: "Flutterwave", date: "2023-11-06 11:45 AM", status: "Success" },
-  { id: "TX125", user: "charlie@example.com", amount: 149.99, gateway: "Paystack", date: "2023-11-05 09:12 AM", status: "Failed" },
-  { id: "TX126", user: "diana@example.com", amount: 29.99, gateway: "Flutterwave", date: "2023-11-05 14:30 PM", status: "Refunded" },
-]
+interface Transaction {
+  id: string
+  user: string
+  amount: number
+  gateway: string
+  status: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED"
+  date: string
+}
 
-const initialRefunds = [
-  { id: "REF1", transactionId: "TX098", user: "eve@example.com", amount: 49.99, reason: "Accidental purchase", date: "2h ago" },
-  { id: "REF2", transactionId: "TX099", user: "frank@example.com", amount: 199.99, reason: "Course not as described", date: "5h ago" },
-]
+interface PendingRefund {
+  id: string
+  orderId: string
+  user: string
+  amount: number
+  reason: string
+  date: string
+}
+
+interface FinanceData {
+  totalRevenue: number
+  totalTransactions: number
+  refundRate: number
+  gatewayBreakdown: Record<string, number>
+  transactions: Transaction[]
+  pendingRefunds: PendingRefund[]
+}
 
 export default function FinancePage() {
-  const [transactions] = useState(initialTransactions)
-  const [refunds, setRefunds] = useState(initialRefunds)
+  const [finance, setFinance] = useState<FinanceData | null>(null)
+  const [refunds, setRefunds] = useState<PendingRefund[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleProcessRefund = (id: string, approve: boolean) => {
-    setRefunds(refunds.filter(r => r.id !== id))
-    toast[approve ? 'success' : 'error'](
-      approve ? "Refund approved and processed!" : "Refund request declined."
+  useEffect(() => {
+    fetch("/api/admin/finance")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) {
+          setFinance(body.data)
+          setRefunds(body.data.pendingRefunds)
+        }
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const handleProcessRefund = async (id: string, approve: boolean) => {
+    const response = await fetch(`/api/admin/refunds/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: approve ? "APPROVED" : "REJECTED" }),
+    })
+    const body = await response.json()
+    if (body.success) {
+      setRefunds(refunds.filter(r => r.id !== id))
+      toast[approve ? 'success' : 'error'](approve ? "Refund approved and processed!" : "Refund request declined.")
+    } else {
+      toast.error(body.error ?? "Failed to process refund")
+    }
+  }
+
+  const gatewayData = useMemo(() => {
+    if (!finance) return []
+    return Object.entries(finance.gatewayBreakdown).map(([name, value]) => ({ name, value }))
+  }, [finance])
+
+  if (isLoading || !finance) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <Loader2 className="h-6 w-6 mr-2 animate-spin" /> Loading finance data...
+      </div>
     )
   }
 
@@ -55,7 +100,7 @@ export default function FinancePage() {
           <p className="text-muted-foreground mt-1">Monitor transactions, gateway distribution, and manage refunds.</p>
         </div>
         <div className="flex items-center gap-3">
-          <CSVLink data={transactions} filename={"transactions-export.csv"}>
+          <CSVLink data={finance.transactions} filename={"transactions-export.csv"}>
             <Button variant="outline" className="shadow-sm border-[#0F2942]/20 text-[#0F2942] dark:border-border dark:text-foreground hover:bg-[#0F2942]/5">
               <Download className="mr-2 h-4 w-4" /> Export CSV
             </Button>
@@ -67,31 +112,22 @@ export default function FinancePage() {
         <Card className="border-border/50 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><DollarSign className="w-16 h-16" /></div>
           <CardContent className="p-6">
-            <p className="text-sm font-medium text-muted-foreground">Total Revenue (All Time)</p>
-            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">$100,000</h3>
-            <div className="mt-2 flex items-center text-sm text-emerald-600 font-medium">
-              <ArrowUpRight className="h-4 w-4 mr-1" /> +14.5% vs last month
-            </div>
+            <p className="text-sm font-medium text-muted-foreground">Total Revenue (Successful Orders)</p>
+            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">${finance.totalRevenue.toLocaleString()}</h3>
           </CardContent>
         </Card>
         <Card className="border-border/50 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><CreditCard className="w-16 h-16" /></div>
           <CardContent className="p-6">
             <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
-            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">1,432</h3>
-            <div className="mt-2 flex items-center text-sm text-emerald-600 font-medium">
-              <ArrowUpRight className="h-4 w-4 mr-1" /> +5.2% vs last month
-            </div>
+            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">{finance.totalTransactions.toLocaleString()}</h3>
           </CardContent>
         </Card>
         <Card className="border-border/50 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10"><RefreshCw className="w-16 h-16" /></div>
           <CardContent className="p-6">
             <p className="text-sm font-medium text-muted-foreground">Refund Rate</p>
-            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">1.2%</h3>
-            <div className="mt-2 flex items-center text-sm text-destructive font-medium">
-              <ArrowDownRight className="h-4 w-4 mr-1" /> -0.4% vs last month
-            </div>
+            <h3 className="text-3xl font-bold tracking-tight mt-2 text-[#0F2942] dark:text-white">{finance.refundRate.toFixed(1)}%</h3>
           </CardContent>
         </Card>
       </div>
@@ -107,7 +143,6 @@ export default function FinancePage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-semibold text-muted-foreground">TX ID</TableHead>
                     <TableHead className="font-semibold text-muted-foreground">User</TableHead>
                     <TableHead className="font-semibold text-muted-foreground">Gateway</TableHead>
                     <TableHead className="font-semibold text-muted-foreground">Amount</TableHead>
@@ -116,9 +151,10 @@ export default function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((tx) => (
+                  {finance.transactions.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No transactions yet.</TableCell></TableRow>
+                  ) : finance.transactions.map((tx) => (
                     <TableRow key={tx.id} className="hover:bg-muted/20 transition-colors">
-                      <TableCell className="font-medium">{tx.id}</TableCell>
                       <TableCell className="text-muted-foreground">{tx.user}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
@@ -128,14 +164,15 @@ export default function FinancePage() {
                       <TableCell className="font-bold">${tx.amount}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`
-                          ${tx.status === 'Success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : ''}
-                          ${tx.status === 'Failed' ? 'bg-destructive/10 text-destructive border-destructive/20' : ''}
-                          ${tx.status === 'Refunded' ? 'bg-[#FFBB0A]/10 text-[#876307] border-[#FFBB0A]/30' : ''}
+                          ${tx.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : ''}
+                          ${tx.status === 'FAILED' ? 'bg-destructive/10 text-destructive border-destructive/20' : ''}
+                          ${tx.status === 'REFUNDED' ? 'bg-[#FFBB0A]/10 text-[#876307] border-[#FFBB0A]/30' : ''}
+                          ${tx.status === 'PENDING' ? 'bg-slate-100 text-slate-600 border-slate-200' : ''}
                         `}>
                           {tx.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-sm">{tx.date}</TableCell>
+                      <TableCell className="text-right text-muted-foreground text-sm">{new Date(tx.date).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -150,26 +187,30 @@ export default function FinancePage() {
               <CardTitle className="text-lg">Gateway Distribution</CardTitle>
             </CardHeader>
             <CardContent className="p-4 flex justify-center items-center h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={gatewayData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {gatewayData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip formatter={(value) => `$${value}`} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
+              {gatewayData.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No transactions yet.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={gatewayData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {gatewayData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value) => `${value} transactions`} />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -198,9 +239,9 @@ export default function FinancePage() {
                           <div>
                             <p className="text-sm font-bold text-foreground">{ref.user}</p>
                             <div className="flex items-center text-[11px] font-medium text-muted-foreground mt-0.5 space-x-2">
-                              <span>Tx: <span className="text-foreground">{ref.transactionId}</span></span>
+                              <span>Order: <span className="text-foreground">{ref.orderId.slice(0, 8)}</span></span>
                               <span>•</span>
-                              <span>{ref.date}</span>
+                              <span>{new Date(ref.date).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </div>
