@@ -4,6 +4,22 @@ import { prisma } from "@/lib/prisma";
 import { requireTrainer } from "@/lib/require-trainer";
 import { getOwnedCourse } from "@/lib/trainer-course";
 
+export async function GET() {
+  const trainer = await requireTrainer();
+  if (!trainer) return apiError("Forbidden", 403);
+
+  const announcements = await prisma.announcement.findMany({
+    where: { trainerId: trainer.id },
+    include: { course: { select: { id: true, title: true, _count: { select: { enrollments: true } } } } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  return apiSuccess(
+    announcements.map(({ course, ...a }) => ({ ...a, course: course.title, audienceSize: course._count.enrollments }))
+  );
+}
+
 const createAnnouncementSchema = z.object({
   courseId: z.string(),
   title: z.string().min(1).max(200),
