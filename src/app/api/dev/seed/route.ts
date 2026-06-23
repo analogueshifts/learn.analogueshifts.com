@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import coursesData from "@/resources/courses.json";
 import { LessonType, SkillLevel } from "@/generated/prisma/enums";
+import { seedAchievements } from "@/lib/achievements";
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -50,6 +51,8 @@ export async function POST() {
     create: { email: "seed-student@dev.local", name: "Demo Student", role: "STUDENT" },
     update: {},
   });
+
+  await seedAchievements();
 
   let courseCount = 0;
 

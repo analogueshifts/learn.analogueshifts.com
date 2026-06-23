@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter, MoreVertical, Users, Star, DollarSign, Edit3, Eye, Video } from "lucide-react";
+import { Plus, Search, Filter, MoreVertical, Users, Star, DollarSign, Edit3, Eye, Video, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -12,73 +12,50 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const courses = [
-  { 
-    id: 1,
-    title: "Fullstack Web Development Masterclass", 
-    status: "Published", 
-    students: 1204, 
-    rating: 4.8, 
-    earnings: 14500, 
-    price: "$99.99", 
-    modules: 12,
-    lastUpdated: "2 days ago",
-    slug: "web-dev",
-    image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=200&auto=format&fit=crop" 
-  },
-  { 
-    id: 2,
-    title: "Advanced UI/UX Design Systems", 
-    status: "Published", 
-    students: 840, 
-    rating: 4.6, 
-    earnings: 8200, 
-    price: "$79.99", 
-    modules: 8,
-    lastUpdated: "1 week ago",
-    slug: "product-design",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=200&auto=format&fit=crop" 
-  },
-  { 
-    id: 3,
-    title: "React Native for Beginners", 
-    status: "Draft", 
-    students: 0, 
-    rating: 0, 
-    earnings: 0, 
-    price: "$49.99", 
-    modules: 5,
-    lastUpdated: "4 hours ago",
-    slug: "mobile-dev",
-    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=200&auto=format&fit=crop" 
-  },
-  { 
-    id: 4,
-    title: "Python Data Science Bootcamp", 
-    status: "Under Review", 
-    students: 0, 
-    rating: 0, 
-    earnings: 0, 
-    price: "$89.99", 
-    modules: 24,
-    lastUpdated: "Just now",
-    slug: "data-science",
-    image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=200&auto=format&fit=crop" 
-  },
-];
+interface TrainerCourse {
+  id: string;
+  slug: string;
+  title: string;
+  status: "DRAFT" | "PENDING" | "LIVE" | "ARCHIVED";
+  price: number;
+  thumbnailUrl: string | null;
+  studentCount: number;
+  sectionCount: number;
+  avgRating: number;
+  earnings: number;
+  updatedAt: string;
+}
+
+const STATUS_LABEL: Record<TrainerCourse["status"], string> = {
+  DRAFT: "Draft",
+  PENDING: "Under Review",
+  LIVE: "Published",
+  ARCHIVED: "Archived",
+};
 
 export default function TrainerCoursesPage() {
   const [activeTab, setActiveTab] = useState("all");
+  const [courses, setCourses] = useState<TrainerCourse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredCourses = courses.filter(course => {
-    if (activeTab === "published") return course.status === "Published";
-    if (activeTab === "drafts") return course.status === "Draft" || course.status === "Under Review";
-    return true; // all
+  useEffect(() => {
+    fetch("/api/trainer/courses")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setCourses(body.data);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const filteredCourses = courses.filter((course) => {
+    if (activeTab === "published") return course.status === "LIVE";
+    if (activeTab === "drafts") return course.status === "DRAFT" || course.status === "PENDING";
+    return true;
   });
 
   return (
     <div className="p-6 lg:p-10 max-w-[1600px] mx-auto space-y-8 pb-20">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -108,9 +85,9 @@ export default function TrainerCoursesPage() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search courses..." 
+            <input
+              type="text"
+              placeholder="Search courses..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:bg-white transition-all"
             />
           </div>
@@ -122,7 +99,11 @@ export default function TrainerCoursesPage() {
 
       {/* Course List */}
       <div className="space-y-4">
-        {filteredCourses.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400 bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading courses...
+          </div>
+        ) : filteredCourses.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-white border border-gray-200 rounded-2xl shadow-sm">
             <p>No courses found for this filter.</p>
           </div>
@@ -131,41 +112,45 @@ export default function TrainerCoursesPage() {
             <Card key={course.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden group bg-white">
             <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row lg:items-center p-4 lg:p-6 gap-6">
-                
+
                 {/* 1. Thumbnail & Title */}
                 <div className="flex items-start gap-5 flex-1 min-w-0">
                   <div className="w-32 h-24 rounded-xl overflow-hidden shrink-0 border border-gray-100 bg-gray-50 relative group-hover:border-background-darkYellow/30 transition-colors">
-                    <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {course.thumbnailUrl ? (
+                      <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300"><Video className="w-8 h-8" /></div>
+                    )}
                   </div>
                   <div className="flex flex-col justify-center py-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${
-                        course.status === 'Published' ? 'bg-green-100 text-green-700' :
-                        course.status === 'Under Review' ? 'bg-blue-100 text-blue-700' :
+                        course.status === 'LIVE' ? 'bg-green-100 text-green-700' :
+                        course.status === 'PENDING' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>
-                        {course.status}
+                        {STATUS_LABEL[course.status]}
                       </span>
                       <span className="text-xs font-bold text-gray-400">•</span>
-                      <span className="text-xs font-medium text-gray-500">Last updated {course.lastUpdated}</span>
+                      <span className="text-xs font-medium text-gray-500">Last updated {new Date(course.updatedAt).toLocaleDateString()}</span>
                     </div>
                     <h3 className="font-extrabold text-lg text-gray-900 truncate pr-4" title={course.title}>
                       {course.title}
                     </h3>
                     <div className="text-sm font-medium text-gray-500 mt-1 flex items-center gap-4">
-                      <span className="flex items-center"><Video className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> {course.modules} Modules</span>
-                      <span className="font-bold text-gray-900">{course.price}</span>
+                      <span className="flex items-center"><Video className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> {course.sectionCount} Sections</span>
+                      <span className="font-bold text-gray-900">{course.price === 0 ? "Free" : `$${course.price.toFixed(2)}`}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Metrics Grid (Only for Published/Active courses) */}
+                {/* 2. Metrics Grid */}
                 <div className="flex gap-8 lg:px-8 lg:border-l border-gray-100 shrink-0">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Students</span>
                     <span className="text-lg font-extrabold text-gray-900 flex items-center">
                       <Users className="w-4 h-4 mr-2 text-gray-400" />
-                      {course.students.toLocaleString()}
+                      {course.studentCount.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex flex-col">
@@ -178,15 +163,15 @@ export default function TrainerCoursesPage() {
                   <div className="flex flex-col hidden sm:flex">
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Rating</span>
                     <span className="text-lg font-extrabold text-gray-900 flex items-center">
-                      <Star className={`w-4 h-4 mr-1.5 ${course.rating > 0 ? "fill-background-darkYellow text-background-darkYellow" : "text-gray-300"}`} />
-                      {course.rating > 0 ? course.rating : "—"}
+                      <Star className={`w-4 h-4 mr-1.5 ${course.avgRating > 0 ? "fill-background-darkYellow text-background-darkYellow" : "text-gray-300"}`} />
+                      {course.avgRating > 0 ? course.avgRating.toFixed(1) : "—"}
                     </span>
                   </div>
                 </div>
 
                 {/* 3. Action Buttons */}
                 <div className="flex items-center gap-2 lg:border-l border-gray-100 lg:pl-6 shrink-0 mt-4 lg:mt-0 justify-end">
-                  {course.status === 'Draft' ? (
+                  {course.status === 'DRAFT' ? (
                     <Button variant="outline" className="bg-white border-2 border-gray-200 text-gray-900 font-bold hover:bg-gray-50" asChild>
                       <Link href="/trainer/courses/new">
                         Continue Editing
@@ -195,7 +180,7 @@ export default function TrainerCoursesPage() {
                   ) : (
                     <>
                       <Button variant="outline" size="icon" className="bg-white text-gray-600 hover:text-gray-900 border-gray-200" asChild>
-                        <Link href={`/courses/${course.slug}?mode=preview`}>
+                        <Link href={`/courses/${course.slug}`}>
                           <Eye className="w-4 h-4" />
                         </Link>
                       </Button>
@@ -206,7 +191,7 @@ export default function TrainerCoursesPage() {
                       </Button>
                     </>
                   )}
-                  
+
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-900">
@@ -216,7 +201,7 @@ export default function TrainerCoursesPage() {
                     <PopoverContent align="end" className="w-48 p-2 rounded-xl border border-gray-100 shadow-xl">
                       <div className="flex flex-col space-y-1">
                         <Button variant="ghost" className="justify-start w-full font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900">
-                          {course.status === 'Published' ? 'Unpublish' : 'View Settings'}
+                          {course.status === 'LIVE' ? 'Unpublish' : 'View Settings'}
                         </Button>
                         <div className="h-px bg-gray-100 my-1 mx-2" />
                         <Button variant="ghost" className="justify-start w-full font-bold text-red-600 hover:bg-red-50 hover:text-red-700">

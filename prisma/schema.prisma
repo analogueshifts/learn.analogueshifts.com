@@ -18,31 +18,51 @@ enum Role {
   ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String     @id @default(cuid())
+  email         String     @unique
   emailVerified DateTime?
   password      String?
   name          String
   avatar        String?
-  role          Role      @default(STUDENT)
+  role          Role       @default(STUDENT)
+  status        UserStatus @default(ACTIVE)
   bio           String?
   location      String?
   jobTitle      String?
-  skills        String[]  @default([])
+  skills        String[]   @default([])
   linkedin      String?
   twitter       String?
   github        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  courses     Course[]
-  reviews     Review[]
-  wishlists   Wishlist[]
-  orders      Order[]
-  enrollments Enrollment[]
+  accounts              Account[]
+  sessions              Session[]
+  courses               Course[]
+  reviews               Review[]
+  wishlists             Wishlist[]
+  orders                Order[]
+  enrollments           Enrollment[]
+  trainerProfile        TrainerProfile?
+  assignmentSubmissions AssignmentSubmission[]
+  announcements         Announcement[]
+  liveSessions          LiveSession[]
+  courseReviews         CourseReview[]
+  payouts               Payout[]
+  lessonProgress        LessonProgress[]
+  courseProgress        CourseProgress[]
+  notes                 Note[]
+  questions             Question[]
+  answers               Answer[]
+  certificates          Certificate[]
+  achievements          UserAchievement[]
 }
 
 model Account {
@@ -133,12 +153,17 @@ model Course {
   trainerId String
   trainer   User   @relation(fields: [trainerId], references: [id])
 
-  sections    Section[]
-  reviews     Review[]
-  wishlists   Wishlist[]
-  orderItems  OrderItem[]
-  enrollments Enrollment[]
-  coupons     Coupon[]
+  sections      Section[]
+  reviews       Review[]
+  wishlists     Wishlist[]
+  orderItems    OrderItem[]
+  enrollments   Enrollment[]
+  coupons       Coupon[]
+  announcements Announcement[]
+  liveSessions  LiveSession[]
+  courseReviews CourseReview[]
+  progress      CourseProgress[]
+  certificates  Certificate[]
 
   @@index([categoryId])
   @@index([trainerId])
@@ -170,6 +195,12 @@ model Lesson {
 
   sectionId String
   section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  quiz       Quiz?
+  assignment Assignment?
+  progress   LessonProgress[]
+  notes      Note[]
+  questions  Question[]
 
   @@index([sectionId])
 }
@@ -306,4 +337,287 @@ model Refund {
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id])
+}
+
+enum TrainerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TrainerProfile {
+  id                String                   @id @default(cuid())
+  bio               String?
+  expertise         String[]                 @default([])
+  experience        String?
+  portfolio         String?
+  applicationStatus TrainerApplicationStatus @default(PENDING)
+  verifiedAt        DateTime?
+  commissionRate    Float                    @default(0.7)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id          String  @id @default(cuid())
+  passScore   Int     @default(80)
+  showAnswers Boolean @default(false)
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  questions QuizQuestion[]
+}
+
+model QuizQuestion {
+  id           String   @id @default(cuid())
+  question     String
+  options      String[]
+  correctIndex Int
+  order        Int      @default(0)
+
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String?
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id          String    @id @default(cuid())
+  fileUrl     String
+  fileName    String?
+  grade       String?
+  feedback    String?
+  submittedAt DateTime  @default(now())
+  gradedAt    DateTime?
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  trainerId String
+  trainer   User   @relation(fields: [trainerId], references: [id])
+}
+
+model LiveSession {
+  id                String    @id @default(cuid())
+  title             String
+  scheduledAt       DateTime
+  duration          Int
+  meetingLink       String
+  recordingUrl      String?
+  reminder24hSentAt DateTime?
+  reminder1hSentAt  DateTime?
+  createdAt         DateTime  @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  trainerId String
+  trainer   User   @relation(fields: [trainerId], references: [id])
+}
+
+enum AdminNotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+model AdminNotification {
+  id        String                @id @default(cuid())
+  type      AdminNotificationType @default(INFO)
+  title     String
+  message   String
+  actionUrl String?
+  read      Boolean               @default(false)
+  createdAt DateTime              @default(now())
+}
+
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+enum CourseReviewDecision {
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+model CourseReview {
+  id        String               @id @default(cuid())
+  decision  CourseReviewDecision
+  feedback  String?
+  createdAt DateTime             @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  adminId String
+  admin   User   @relation(fields: [adminId], references: [id])
+}
+
+enum PayoutMethod {
+  BANK_TRANSFER
+  PAYPAL
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  amount      Int
+  method      PayoutMethod
+  period      String
+  status      PayoutStatus @default(PENDING)
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  trainerId String
+  trainer   User   @relation(fields: [trainerId], references: [id])
+}
+
+model LessonProgress {
+  id             String   @id @default(cuid())
+  watchTime      Float    @default(0)
+  completed      Boolean  @default(false)
+  lastAccessedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model CourseProgress {
+  id              String    @id @default(cuid())
+  progressPercent Float     @default(0)
+  currentLessonId String?
+  lastAccessedAt  DateTime  @updatedAt
+  completedAt     DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  timestamp Float    @default(0)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  upvotes   Int      @default(0)
+  createdAt DateTime @default(now())
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  answers Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  body       String
+  isAccepted Boolean  @default(false)
+  upvotes    Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+}
+
+model Certificate {
+  id       String   @id @default(cuid())
+  code     String   @unique
+  issuedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Achievement {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String
+  icon        String?
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id       String   @id @default(cuid())
+  earnedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
 }

@@ -1,121 +1,197 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, UploadCloud, Video, Image as ImageIcon, GripVertical, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, UploadCloud, Video, Image as ImageIcon, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CurriculumBuilder from "@/components/application/courses/CurriculumBuilder";
+import CurriculumBuilder, { SectionDraft, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
+import { useUploadThing } from "@/lib/uploadthing";
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 export default function CreateCoursePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("basic");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Form States
+  // Tab 1: Basic Information
+  const [title, setTitle] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [level, setLevel] = useState("BEGINNER");
+  const [description, setDescription] = useState("");
+
+  // Tab 2: Media
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Tab 3: Curriculum
+  const [sections, setSections] = useState<SectionDraft[]>(createEmptySections());
+
+  // Tab 4: Pricing
   const [isPaid, setIsPaid] = useState(true);
-  const [videoFile, setVideoFile] = useState<string | null>(null);
-  const [thumbFile, setThumbFile] = useState<string | null>(null);
-  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  const [price, setPrice] = useState("");
 
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const thumbInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setCategories(body.data);
+      });
+  }, []);
 
-  // Curriculum State
-  const [sections, setSections] = useState([
-    { 
-      id: 1, 
-      title: "Section 1: Introduction", 
-      lessons: [
-        { id: 101, title: "Welcome to the course!", type: "video", duration: "02:15", url: "", description: "", isExpanded: false },
-        { id: 102, title: "Setup your environment", type: "text", duration: "05:00", url: "", description: "", isExpanded: false }
-      ] 
+  const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
+    onClientUploadComplete: (res) => {
+      if (res?.[0]) setPreviewUrl(res[0].serverData.videoUrl);
+    },
+  });
+  const { startUpload: startThumbnailUpload, isUploading: isUploadingThumbnail } = useUploadThing("courseThumbnailUploader", {
+    onClientUploadComplete: (res) => {
+      if (res?.[0]) setThumbnailUrl(res[0].serverData.url);
+    },
+  });
+
+  async function ensureCourse() {
+    if (courseId) return courseId;
+
+    if (!title.trim() || description.trim().length < 10) {
+      toast.error("Add a title and a description (10+ characters) before saving.");
+      return null;
     }
-  ]);
 
-  const addSection = () => {
-    setSections([...sections, { id: Date.now(), title: `New Section ${sections.length + 1}`, lessons: [] }]);
-  };
+    const response = await fetch("/api/trainer/courses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        subtitle: subtitle || undefined,
+        description,
+        categoryId: categoryId || undefined,
+        level,
+        price: isPaid ? Math.round(parseFloat(price || "0")) : 0,
+      }),
+    });
+    const body = await response.json();
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to create course");
+      return null;
+    }
+    setCourseId(body.data.id);
+    return body.data.id as string;
+  }
 
-  const deleteSection = (id: number) => {
-    setSections(sections.filter(s => s.id !== id));
-  };
+  async function syncCourseDetails(id: string) {
+    await fetch(`/api/trainer/courses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        subtitle: subtitle || undefined,
+        description,
+        categoryId: categoryId || undefined,
+        level,
+        price: isPaid ? Math.round(parseFloat(price || "0")) : 0,
+        thumbnailUrl: thumbnailUrl || undefined,
+        previewUrl: previewUrl || undefined,
+      }),
+    });
+  }
 
-  const addLesson = (sectionId: number) => {
-    setSections(sections.map(s => {
-      if (s.id === sectionId) {
-        return {
-          ...s,
-          lessons: [...s.lessons, { id: Date.now(), title: "New Lesson", type: "video", duration: "00:00", url: "", description: "", isExpanded: true }]
-        };
+  async function pushCurriculum(id: string) {
+    for (const section of sections) {
+      const sectionRes = await fetch(`/api/trainer/courses/${id}/sections`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: section.title }),
+      });
+      const sectionBody = await sectionRes.json();
+      if (!sectionBody.success) continue;
+      const sectionId = sectionBody.data.id;
+
+      for (const lesson of section.lessons) {
+        const type = lesson.type.toUpperCase();
+        await fetch(`/api/trainer/courses/${id}/lessons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sectionId,
+            title: lesson.title,
+            type,
+            videoUrl: lesson.type === "video" ? lesson.url || undefined : undefined,
+            duration: lesson.duration || undefined,
+            description: lesson.type === "article" ? lesson.description || undefined : undefined,
+            isFreePreview: lesson.type === "video" && sections[0]?.id === section.id && section.lessons[0]?.id === lesson.id,
+            quiz:
+              lesson.type === "quiz" && lesson.quizQuestions.length > 0
+                ? {
+                    passScore: lesson.quizPassScore,
+                    questions: lesson.quizQuestions
+                      .filter((q) => q.question.trim())
+                      .map((q) => ({ question: q.question, options: q.options, correctIndex: q.correctIndex })),
+                  }
+                : undefined,
+            assignment:
+              lesson.type === "assignment"
+                ? { title: lesson.title, description: lesson.description || undefined, fileUrl: lesson.url || undefined }
+                : undefined,
+          }),
+        });
       }
-      return s;
-    }));
-  };
+    }
+  }
 
-  const deleteLesson = (sectionId: number, lessonId: number) => {
-    setSections(sections.map(s => {
-      if (s.id === sectionId) {
-        return { ...s, lessons: s.lessons.filter(l => l.id !== lessonId) };
-      }
-      return s;
-    }));
-  };
-
-  const toggleLessonExpand = (sectionId: number, lessonId: number) => {
-    setSections(sections.map(s => {
-      if (s.id === sectionId) {
-        return { 
-          ...s, 
-          lessons: s.lessons.map(l => l.id === lessonId ? { ...l, isExpanded: !l.isExpanded } : l) 
-        };
-      }
-      return s;
-    }));
-  };
-
-  const updateLessonData = (sectionId: number, lessonId: number, field: string, value: string) => {
-    setSections(sections.map(s => {
-      if (s.id === sectionId) {
-        return { 
-          ...s, 
-          lessons: s.lessons.map(l => l.id === lessonId ? { ...l, [field]: value } : l) 
-        };
-      }
-      return s;
-    }));
-  };
-
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
+    const id = await ensureCourse();
+    if (id) {
+      await syncCourseDetails(id);
+      await pushCurriculum(id);
       setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    }, 1000);
+      toast.success("Draft saved");
+    }
+    setIsSaving(false);
   };
 
   const handlePreview = () => {
-    // In a real app, this would open a new tab to `/courses/preview/:draftId`
-    alert("Opening Course Preview in a new tab... (Mock)");
+    toast("Course preview isn't available until the course is published.");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    const id = await ensureCourse();
+    if (!id) {
       setIsSaving(false);
-      alert("Course submitted for review!");
-      router.push("/trainer/courses");
-    }, 1500);
+      return;
+    }
+    await syncCourseDetails(id);
+    await pushCurriculum(id);
+
+    const response = await fetch(`/api/trainer/courses/${id}/submit-review`, { method: "POST" });
+    const body = await response.json();
+
+    setIsSaving(false);
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to submit for review");
+      return;
+    }
+
+    toast.success("Course submitted for review!");
+    router.push("/trainer/courses");
   };
 
   return (
     <div className="p-6 lg:p-10 max-w-[1200px] mx-auto space-y-8 pb-32">
-      
-      {/* Header */}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 bg-gray-50/90 backdrop-blur-md z-10 py-4 border-b border-gray-200/50 -mx-6 px-6 lg:-mx-10 lg:px-10">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild className="rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-100">
@@ -140,40 +216,18 @@ export default function CreateCoursePage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row gap-8 items-start">
-        
-        {/* Left Sidebar Navigation */}
+
         <div className="w-full md:w-64 shrink-0 top-24">
           <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-2">
-            <TabsTrigger 
-              value="basic" 
-              className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all"
-            >
-              1. Basic Information
-            </TabsTrigger>
-            <TabsTrigger 
-              value="media" 
-              className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all"
-            >
-              2. Intro Video & Media
-            </TabsTrigger>
-            <TabsTrigger 
-              value="curriculum" 
-              className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all"
-            >
-              3. Curriculum Builder
-            </TabsTrigger>
-            <TabsTrigger 
-              value="pricing" 
-              className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all"
-            >
-              4. Pricing & Publish
-            </TabsTrigger>
+            <TabsTrigger value="basic" className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all">1. Basic Information</TabsTrigger>
+            <TabsTrigger value="media" className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all">2. Intro Video & Media</TabsTrigger>
+            <TabsTrigger value="curriculum" className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all">3. Curriculum Builder</TabsTrigger>
+            <TabsTrigger value="pricing" className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-gray-200 border border-transparent font-bold text-gray-500 data-[state=active]:text-gray-900 transition-all">4. Pricing & Publish</TabsTrigger>
           </TabsList>
         </div>
 
-        {/* Right Content Area */}
         <div className="flex-1 w-full min-w-0">
-          
+
           {/* TAB 1: BASIC INFO */}
           <TabsContent value="basic" className="mt-0 space-y-6 focus-visible:outline-none focus-visible:ring-0">
             <Card className="border-gray-200 shadow-sm rounded-[2rem] bg-white overflow-hidden">
@@ -184,40 +238,39 @@ export default function CreateCoursePage() {
               <CardContent className="p-8 space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-900">Course Title <span className="text-red-500">*</span></label>
-                  <input type="text" placeholder="e.g. Complete React Native Bootcamp 2026" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
+                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Complete React Native Bootcamp 2026" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
                   <p className="text-xs text-gray-500">A good title is catchy and describes exactly what the student will learn.</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-900">Course Subtitle</label>
-                  <input type="text" placeholder="e.g. Master mobile app development from scratch" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
+                  <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="e.g. Master mobile app development from scratch" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-900">Category</label>
-                    <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium appearance-none">
+                    <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium appearance-none">
                       <option value="">Select a category</option>
-                      <option value="development">Development</option>
-                      <option value="design">Design</option>
-                      <option value="business">Business</option>
-                      <option value="marketing">Marketing</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-900">Level</label>
-                    <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium appearance-none">
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="expert">Expert</option>
-                      <option value="all">All Levels</option>
+                    <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium appearance-none">
+                      <option value="BEGINNER">Beginner</option>
+                      <option value="INTERMEDIATE">Intermediate</option>
+                      <option value="ADVANCED">Advanced</option>
+                      <option value="EXPERT">Expert</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-900">Detailed Description</label>
-                  <textarea rows={6} placeholder="Describe what students will learn, requirements, and who this course is for..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium resize-none" />
+                  <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe what students will learn, requirements, and who this course is for..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium resize-none" />
                 </div>
               </CardContent>
               <div className="p-6 border-t border-gray-100 flex justify-end">
@@ -236,25 +289,26 @@ export default function CreateCoursePage() {
                 <CardDescription>First impressions matter. Upload a high-quality thumbnail and an engaging intro video.</CardDescription>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
-                
-                {/* Intro Video Section */}
+
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Promotional Intro Video <span className="text-red-500">*</span></h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Promotional Intro Video</h3>
                   <p className="text-sm text-gray-500 mb-4">Students who watch a well-made promo video are 5x more likely to enroll. Keep it under 2 minutes.</p>
-                  
-                  <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={(e) => e.target.files && setVideoFile(e.target.files[0].name)} />
-                  
-                  <div 
-                    onClick={() => videoInputRef.current?.click()}
-                    className={`border-2 border-dashed ${videoFile ? 'border-green-400 bg-green-50/50' : 'border-gray-300 hover:bg-gray-50 hover:border-background-darkYellow'} rounded-2xl p-12 text-center transition-all cursor-pointer group`}
-                  >
-                    {videoFile ? (
+
+                  <input type="file" id="intro-video-input" className="hidden" accept="video/*" onChange={(e) => e.target.files?.[0] && startVideoUpload([e.target.files[0]])} />
+
+                  <label htmlFor="intro-video-input" className={`border-2 border-dashed ${previewUrl ? 'border-green-400 bg-green-50/50' : 'border-gray-300 hover:bg-gray-50 hover:border-background-darkYellow'} rounded-2xl p-12 text-center transition-all cursor-pointer group block`}>
+                    {isUploadingVideo ? (
+                      <>
+                        <Loader2 className="w-20 h-20 text-blue-500 mx-auto mb-4 animate-spin" />
+                        <h4 className="font-extrabold text-gray-900 text-lg mb-1">Uploading...</h4>
+                      </>
+                    ) : previewUrl ? (
                       <>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                           <CheckCircle2 className="w-10 h-10 text-green-500" />
                         </div>
-                        <h4 className="font-extrabold text-gray-900 text-lg mb-1">{videoFile}</h4>
-                        <p className="text-sm text-green-600 font-medium">Video selected successfully</p>
+                        <h4 className="font-extrabold text-gray-900 text-lg mb-1">Video uploaded successfully</h4>
+                        <p className="text-sm text-green-600 font-medium">Click to replace</p>
                       </>
                     ) : (
                       <>
@@ -266,45 +320,30 @@ export default function CreateCoursePage() {
                         <Button variant="outline" className="pointer-events-none bg-white border-gray-200 font-bold">Select File</Button>
                       </>
                     )}
-                  </div>
+                  </label>
                 </div>
 
                 <hr className="border-gray-100" />
 
-                {/* Course Thumbnail */}
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">Course Thumbnail Image</h3>
                   <p className="text-sm text-gray-500 mb-4">This image will represent your course on the marketplace. Use a 16:9 aspect ratio.</p>
-                  
-                  <input 
-                    type="file" 
-                    ref={thumbInputRef} 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setThumbFile(e.target.files[0].name);
-                        setThumbPreview(URL.createObjectURL(e.target.files[0]));
-                      }
-                    }} 
-                  />
+
+                  <input type="file" id="thumbnail-input" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && startThumbnailUpload([e.target.files[0]])} />
 
                   <div className="flex flex-col sm:flex-row gap-6 items-start">
                     <div className="w-full sm:w-64 h-36 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">
-                      {thumbPreview ? (
-                        <img src={thumbPreview} alt="Thumbnail Preview" className="absolute inset-0 w-full h-full object-cover object-center" />
+                      {thumbnailUrl ? (
+                        <img src={thumbnailUrl} alt="Thumbnail Preview" className="absolute inset-0 w-full h-full object-cover object-center" />
                       ) : (
                         <ImageIcon className="w-8 h-8 text-gray-300" />
                       )}
                     </div>
-                    <div 
-                      onClick={() => thumbInputRef.current?.click()}
-                      className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:bg-gray-50 hover:border-background-darkYellow transition-all cursor-pointer w-full"
-                    >
-                      {thumbFile ? <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" /> : <UploadCloud className="w-8 h-8 text-gray-400 mx-auto mb-2" />}
-                      <p className="text-sm font-bold text-gray-900">{thumbFile ? 'Change Image' : 'Upload Image'}</p>
+                    <label htmlFor="thumbnail-input" className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:bg-gray-50 hover:border-background-darkYellow transition-all cursor-pointer w-full block">
+                      {isUploadingThumbnail ? <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" /> : thumbnailUrl ? <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" /> : <UploadCloud className="w-8 h-8 text-gray-400 mx-auto mb-2" />}
+                      <p className="text-sm font-bold text-gray-900">{thumbnailUrl ? 'Change Image' : 'Upload Image'}</p>
                       <p className="text-xs text-gray-500 mt-1">JPEG or PNG, 1280x720px</p>
-                    </div>
+                    </label>
                   </div>
                 </div>
 
@@ -326,8 +365,7 @@ export default function CreateCoursePage() {
                 <CardDescription>Organize your course into sections and lessons. Add video content, quizzes, and resources.</CardDescription>
               </CardHeader>
               <CardContent className="p-8 space-y-6 bg-gray-50/30">
-                <CurriculumBuilder />
-
+                <CurriculumBuilder sections={sections} onChange={setSections} />
               </CardContent>
               <div className="p-6 border-t border-gray-100 flex justify-between bg-gray-50/30">
                 <Button variant="outline" onClick={() => setActiveTab("media")} className="font-bold bg-white">Back to Media</Button>
@@ -346,7 +384,7 @@ export default function CreateCoursePage() {
                 <CardDescription>Set the price for your course. You can offer it for free or as a paid enrollment.</CardDescription>
               </CardHeader>
               <CardContent className="p-8 space-y-6">
-                
+
                 <div className="space-y-4">
                   <div onClick={() => setIsPaid(true)} className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${isPaid ? 'border-background-darkYellow bg-[#FFFBEC]' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
                     <input type="radio" checked={isPaid} readOnly className="w-5 h-5 text-background-darkYellow focus:ring-background-darkYellow" />
@@ -369,7 +407,7 @@ export default function CreateCoursePage() {
                     <label className="text-sm font-bold text-gray-900">Course Price (USD)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500">$</span>
-                      <input type="number" placeholder="99.99" className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-bold text-lg" />
+                      <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="99.99" className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-bold text-lg" />
                     </div>
                   </div>
                 )}

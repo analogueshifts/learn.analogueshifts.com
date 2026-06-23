@@ -1,16 +1,39 @@
-import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { z } from "zod";
+import { apiError, apiSuccess } from "@/lib/api-response";
+import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
+import { recomputeCourseProgress } from "@/lib/course-progress";
+import { checkProgressAchievements } from "@/lib/achievements";
 
-export async function PATCH(req: Request) {
-  try {
-    const body = await req.json();
-    const { courseId, lessonId, watchTime, completed } = body;
+const watchtimeSchema = z.object({
+  courseId: z.string(),
+  lessonId: z.string(),
+  watchTime: z.number().min(0),
+  completed: z.boolean(),
+});
 
-    // Simulate saving to database
-    console.log(`[WatchTime Sync] Course: ${courseId}, Lesson: ${lessonId}, Time: ${watchTime}s, Completed: ${completed}`);
+export async function PATCH(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return apiError("Not authenticated", 401);
 
-    return NextResponse.json({ success: true, message: "Progress saved" });
-  } catch (error) {
-    console.error("[WatchTime Error]", error);
-    return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });
-  }
+  const parsed = watchtimeSchema.safeParse(await request.json());
+  if (!parsed.success) return apiError(parsed.error.message, 422);
+  const { courseId, lessonId, watchTime, completed } = parsed.data;
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId: session.user.id, courseId } },
+  });
+  if (!enrollment) return apiError("Not enrolled in this course", 403);
+
+  await prisma.lessonProgress.upsert({
+    where: { userId_lessonId: { userId: session.user.id, lessonId } },
+    create: { userId: session.user.id, lessonId, watchTime, completed },
+    update: { watchTime, completed },
+  });
+
+  await recomputeCourseProgress(session.user.id, courseId, lessonId);
+  await checkProgressAchievements(session.user.id, courseId);
+
+  return apiSuccess({ message: "Progress saved" });
 }

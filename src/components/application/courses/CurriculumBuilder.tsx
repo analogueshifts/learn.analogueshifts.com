@@ -1,31 +1,75 @@
 "use client";
 
 import { useState } from "react";
-import { GripVertical, Plus, Trash2, Video, FileText, CheckSquare, ClipboardList, UploadCloud, Bold, Italic, Heading2, List, ListOrdered } from "lucide-react";
+import { GripVertical, Plus, Trash2, Video, FileText, CheckSquare, ClipboardList, UploadCloud, Bold, Italic, Heading2, List, ListOrdered, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useUploadThing } from "@/lib/uploadthing";
+
+export type LessonType = "video" | "article" | "quiz" | "assignment";
+
+export interface QuizQuestionDraft {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+
+export interface LessonDraft {
+  id: string;
+  title: string;
+  type: LessonType;
+  duration: string;
+  url: string;
+  fileName?: string;
+  description: string;
+  isExpanded: boolean;
+  quizPassScore: number;
+  quizQuestions: QuizQuestionDraft[];
+}
+
+export interface SectionDraft {
+  id: string;
+  title: string;
+  lessons: LessonDraft[];
+}
+
+export const createEmptySections = (): SectionDraft[] => [
+  {
+    id: "sec-1",
+    title: "Section 1: Introduction",
+    lessons: [
+      {
+        id: "l-1",
+        title: "Welcome to the course!",
+        type: "video",
+        duration: "",
+        url: "",
+        description: "",
+        isExpanded: true,
+        quizPassScore: 80,
+        quizQuestions: [],
+      },
+    ],
+  },
+];
 
 // === TIPTAP EDITOR COMPONENT ===
 const RichTextEditor = ({ content, onChange }: { content: string, onChange: (html: string) => void }) => {
-  const [updateTicker, setUpdateTicker] = useState(0);
+  const [, setUpdateTicker] = useState(0);
 
   const editor = useEditor({
     extensions: [StarterKit],
     content,
     immediatelyRender: false,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
-    onTransaction: () => {
-      // Force component re-render on selection or formatting changes
-      setUpdateTicker(prev => prev + 1);
-    },
+    onTransaction: () => setUpdateTicker((prev) => prev + 1),
     editorProps: {
-      attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] px-4 py-3',
-      },
+      attributes: { class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] px-4 py-3' },
     },
   });
 
@@ -34,38 +78,13 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
   return (
     <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
       <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 p-2">
-        <button
-          type="button"
-          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
-          className={`p-1.5 rounded-lg transition-colors ${editor.isActive('bold') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-          title="Bold"
-        ><Bold className="w-4 h-4" /></button>
-        <button
-          type="button"
-          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
-          className={`p-1.5 rounded-lg transition-colors ${editor.isActive('italic') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-          title="Italic"
-        ><Italic className="w-4 h-4" /></button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }} className={`p-1.5 rounded-lg transition-colors ${editor.isActive('bold') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`} title="Bold"><Bold className="w-4 h-4" /></button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }} className={`p-1.5 rounded-lg transition-colors ${editor.isActive('italic') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`} title="Italic"><Italic className="w-4 h-4" /></button>
         <div className="w-px h-4 bg-gray-300 mx-1"></div>
-        <button
-          type="button"
-          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }}
-          className={`p-1.5 rounded-lg transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-          title="Heading"
-        ><Heading2 className="w-4 h-4" /></button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }} className={`p-1.5 rounded-lg transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`} title="Heading"><Heading2 className="w-4 h-4" /></button>
         <div className="w-px h-4 bg-gray-300 mx-1"></div>
-        <button
-          type="button"
-          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }}
-          className={`p-1.5 rounded-lg transition-colors ${editor.isActive('bulletList') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-          title="Bullet List"
-        ><List className="w-4 h-4" /></button>
-        <button
-          type="button"
-          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
-          className={`p-1.5 rounded-lg transition-colors ${editor.isActive('orderedList') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-          title="Ordered List"
-        ><ListOrdered className="w-4 h-4" /></button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }} className={`p-1.5 rounded-lg transition-colors ${editor.isActive('bulletList') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`} title="Bullet List"><List className="w-4 h-4" /></button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }} className={`p-1.5 rounded-lg transition-colors ${editor.isActive('orderedList') ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`} title="Ordered List"><ListOrdered className="w-4 h-4" /></button>
       </div>
       <EditorContent editor={editor} />
     </div>
@@ -73,16 +92,67 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
 };
 
 // === LESSON EDITOR COMPONENT ===
-const LessonEditor = ({ lesson, isFirstLesson, updateLesson }: { lesson: any, isFirstLesson: boolean, updateLesson: (id: string, field: string, value: any) => void }) => {
+const LessonEditor = ({
+  lesson,
+  isFirstLesson,
+  updateLesson,
+}: {
+  lesson: LessonDraft;
+  isFirstLesson: boolean;
+  updateLesson: (id: string, field: string, value: any) => void;
+}) => {
+  const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
+    onClientUploadComplete: (res) => {
+      if (res?.[0]) updateLesson(lesson.id, "url", res[0].serverData.videoUrl);
+    },
+  });
+  const { startUpload: startResourceUpload, isUploading: isUploadingResource } = useUploadThing("assignmentResourceUploader", {
+    onClientUploadComplete: (res) => {
+      if (res?.[0]) {
+        updateLesson(lesson.id, "url", res[0].serverData.url);
+        updateLesson(lesson.id, "fileName", res[0].serverData.name);
+      }
+    },
+  });
+
+  const addQuestion = () => {
+    updateLesson(lesson.id, "quizQuestions", [
+      ...lesson.quizQuestions,
+      { id: `q-${Date.now()}`, question: "", options: ["", ""], correctIndex: 0 },
+    ]);
+  };
+
+  const updateQuestion = (qId: string, field: string, value: any) => {
+    updateLesson(
+      lesson.id,
+      "quizQuestions",
+      lesson.quizQuestions.map((q) => (q.id === qId ? { ...q, [field]: value } : q))
+    );
+  };
+
+  const removeQuestion = (qId: string) => {
+    updateLesson(lesson.id, "quizQuestions", lesson.quizQuestions.filter((q) => q.id !== qId));
+  };
+
+  const addOption = (qId: string) => {
+    updateQuestion(qId, "options", [...(lesson.quizQuestions.find((q) => q.id === qId)?.options ?? []), ""]);
+  };
+
+  const updateOption = (qId: string, optionIndex: number, value: string) => {
+    const question = lesson.quizQuestions.find((q) => q.id === qId);
+    if (!question) return;
+    const options = question.options.map((o, i) => (i === optionIndex ? value : o));
+    updateQuestion(qId, "options", options);
+  };
+
   return (
     <div className="p-4 bg-gray-50 border-t border-gray-100 space-y-4">
-      {/* Type Selector */}
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-xl border border-gray-200 w-full shadow-sm">
-          {['video', 'article', 'quiz', 'assignment'].map(t => {
+          {(['video', 'article', 'quiz', 'assignment'] as LessonType[]).map((t) => {
             const isDisabled = isFirstLesson && t !== 'video';
             return (
-              <button 
+              <button
                 key={t}
                 disabled={isDisabled}
                 onClick={() => updateLesson(lesson.id, 'type', t)}
@@ -107,17 +177,43 @@ const LessonEditor = ({ lesson, isFirstLesson, updateLesson }: { lesson: any, is
 
       {lesson.type === 'video' && (
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-white cursor-pointer hover:bg-gray-50 transition-all group relative overflow-hidden">
-            <UploadCloud className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-blue-500 transition-colors" />
-            <p className="text-sm font-bold text-gray-900">Upload Video via UploadThing</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">MP4, WebM (Max 2GB)</p>
-            {/* Mock Upload Progress */}
-            {lesson.url && (
-              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gray-100">
-                <div className="h-full bg-blue-500 w-[100%] transition-all"></div>
-              </div>
+          <input
+            type="text"
+            value={lesson.duration}
+            onChange={(e) => updateLesson(lesson.id, 'duration', e.target.value)}
+            placeholder="Duration (e.g. 05:30)"
+            className="w-40 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-background-darkYellow outline-none"
+          />
+          <input
+            type="file"
+            accept="video/*"
+            className="hidden"
+            id={`video-input-${lesson.id}`}
+            onChange={(e) => e.target.files?.[0] && startVideoUpload([e.target.files[0]])}
+          />
+          <label
+            htmlFor={`video-input-${lesson.id}`}
+            className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-white cursor-pointer hover:bg-gray-50 transition-all group relative overflow-hidden block"
+          >
+            {isUploadingVideo ? (
+              <>
+                <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" />
+                <p className="text-sm font-bold text-gray-900">Uploading...</p>
+              </>
+            ) : lesson.url ? (
+              <>
+                <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <p className="text-sm font-bold text-gray-900">Video uploaded</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Click to replace</p>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-blue-500 transition-colors" />
+                <p className="text-sm font-bold text-gray-900">Upload Video</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">MP4, WebM (Max 1GB)</p>
+              </>
             )}
-          </div>
+          </label>
         </div>
       )}
 
@@ -130,54 +226,85 @@ const LessonEditor = ({ lesson, isFirstLesson, updateLesson }: { lesson: any, is
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">
             <h4 className="font-extrabold text-gray-900 text-lg">Quiz Builder</h4>
             <div className="flex items-center gap-3">
-               <label className="text-sm font-bold text-gray-700">Pass Score:</label>
-               <input type="number" defaultValue={80} className="w-20 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold text-center focus:ring-2 focus:ring-background-darkYellow outline-none" />
-               <span className="text-sm font-bold text-gray-500">%</span>
+              <label className="text-sm font-bold text-gray-700">Pass Score:</label>
+              <input
+                type="number"
+                value={lesson.quizPassScore}
+                onChange={(e) => updateLesson(lesson.id, 'quizPassScore', Number(e.target.value))}
+                className="w-20 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold text-center focus:ring-2 focus:ring-background-darkYellow outline-none"
+              />
+              <span className="text-sm font-bold text-gray-500">%</span>
             </div>
           </div>
-          
-          <div className="p-4 border border-gray-200 rounded-xl bg-gray-50 space-y-4">
-            <input type="text" placeholder="Question Title (e.g. What is React?)" className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-background-darkYellow outline-none" />
-            
-            <div className="space-y-2 pl-4">
-              <div className="flex items-center gap-3">
-                 <input type="radio" name={`q-${lesson.id}`} className="w-4 h-4 text-green-500 focus:ring-green-500" defaultChecked />
-                 <input type="text" placeholder="A JavaScript library for building UIs" className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium focus:border-gray-400 outline-none" />
+
+          {lesson.quizQuestions.map((q) => (
+            <div key={q.id} className="p-4 border border-gray-200 rounded-xl bg-gray-50 space-y-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={q.question}
+                  onChange={(e) => updateQuestion(q.id, 'question', e.target.value)}
+                  placeholder="Question Title (e.g. What is React?)"
+                  className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-background-darkYellow outline-none"
+                />
+                <Button variant="ghost" size="icon" onClick={() => removeQuestion(q.id)} className="h-9 w-9 text-gray-400 hover:text-red-500 shrink-0">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-              <div className="flex items-center gap-3">
-                 <input type="radio" name={`q-${lesson.id}`} className="w-4 h-4 text-green-500 focus:ring-green-500" />
-                 <input type="text" placeholder="A database management system" className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium focus:border-gray-400 outline-none" />
+
+              <div className="space-y-2 pl-4">
+                {q.options.map((option, optionIndex) => (
+                  <div key={optionIndex} className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name={`correct-${q.id}`}
+                      checked={q.correctIndex === optionIndex}
+                      onChange={() => updateQuestion(q.id, 'correctIndex', optionIndex)}
+                      className="w-4 h-4 text-green-500 focus:ring-green-500"
+                    />
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => updateOption(q.id, optionIndex, e.target.value)}
+                      placeholder={`Option ${optionIndex + 1}`}
+                      className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium focus:border-gray-400 outline-none"
+                    />
+                  </div>
+                ))}
+                <Button variant="ghost" size="sm" onClick={() => addOption(q.id)} className="text-blue-600 text-xs font-bold mt-2 hover:bg-blue-50">+ Add Option</Button>
               </div>
-              <Button variant="ghost" size="sm" className="text-blue-600 text-xs font-bold mt-2 hover:bg-blue-50">+ Add Option</Button>
             </div>
-          </div>
-          <Button variant="outline" className="w-full border-dashed border-gray-300 font-bold hover:bg-gray-50 text-gray-600">+ Add Question</Button>
+          ))}
+          <Button variant="outline" onClick={addQuestion} className="w-full border-dashed border-gray-300 font-bold hover:bg-gray-50 text-gray-600">+ Add Question</Button>
         </div>
       )}
 
       {lesson.type === 'assignment' && (
         <div className="space-y-4">
-           <textarea 
-             rows={4} 
-             placeholder="Describe the assignment requirements..." 
-             value={lesson.description || ''}
-             onChange={(e) => updateLesson(lesson.id, 'description', e.target.value)}
-             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-background-darkYellow outline-none resize-none" 
-           />
-           <div className="relative group">
-             <input 
-               type="file" 
-               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-               onChange={(e) => {
-                 const file = e.target.files?.[0];
-                 if (file) updateLesson(lesson.id, 'url', file.name);
-               }} 
-             />
-             <Button variant={lesson.url ? "default" : "outline"} className={`w-full font-bold transition-all ${lesson.url ? 'bg-gray-900 text-white shadow-md' : 'border-gray-200 text-gray-700 bg-white group-hover:bg-gray-50'}`}>
-               <UploadCloud className="w-4 h-4 mr-2" /> 
-               {lesson.url ? `Attached: ${lesson.url}` : 'Attach Resources'}
-             </Button>
-           </div>
+          <textarea
+            rows={4}
+            placeholder="Describe the assignment requirements..."
+            value={lesson.description}
+            onChange={(e) => updateLesson(lesson.id, 'description', e.target.value)}
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-background-darkYellow outline-none resize-none"
+          />
+          <input
+            type="file"
+            className="hidden"
+            id={`resource-input-${lesson.id}`}
+            onChange={(e) => e.target.files?.[0] && startResourceUpload([e.target.files[0]])}
+          />
+          <label htmlFor={`resource-input-${lesson.id}`} className="block">
+            <Button asChild={false} variant={lesson.url ? "default" : "outline"} className={`w-full font-bold transition-all cursor-pointer ${lesson.url ? 'bg-gray-900 text-white shadow-md' : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'}`}>
+              <span>
+                {isUploadingResource ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><UploadCloud className="w-4 h-4 mr-2" /> {lesson.url ? `Attached: ${lesson.fileName ?? 'resource'}` : 'Attach Resources'}</>
+                )}
+              </span>
+            </Button>
+          </label>
         </div>
       )}
     </div>
@@ -195,15 +322,15 @@ const SortableLessonItem = ({ lesson, isFirstLesson, deleteLesson, toggleExpand,
         <div {...attributes} {...listeners} className="p-1.5 hover:bg-gray-100 rounded-md cursor-grab touch-none">
           <GripVertical className="w-4 h-4 text-gray-400" />
         </div>
-        
-        {lesson.type === 'video' ? <Video className="w-4 h-4 text-blue-500 shrink-0" /> : 
+
+        {lesson.type === 'video' ? <Video className="w-4 h-4 text-blue-500 shrink-0" /> :
          lesson.type === 'article' ? <FileText className="w-4 h-4 text-green-500 shrink-0" /> :
          lesson.type === 'quiz' ? <CheckSquare className="w-4 h-4 text-purple-500 shrink-0" /> :
          <ClipboardList className="w-4 h-4 text-orange-500 shrink-0" />}
-        
-        <input 
-          type="text" 
-          value={lesson.title} 
+
+        <input
+          type="text"
+          value={lesson.title}
           onChange={(e) => updateLesson(lesson.id, 'title', e.target.value)}
           className="font-bold text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1 min-w-[100px]"
         />
@@ -219,7 +346,7 @@ const SortableLessonItem = ({ lesson, isFirstLesson, deleteLesson, toggleExpand,
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
-      
+
       {lesson.isExpanded && (
         <LessonEditor lesson={lesson} isFirstLesson={isFirstLesson} updateLesson={updateLesson} />
       )}
@@ -227,20 +354,13 @@ const SortableLessonItem = ({ lesson, isFirstLesson, deleteLesson, toggleExpand,
   );
 };
 
-// === MAIN CURRICULUM BUILDER ===
-export default function CurriculumBuilder() {
-  const [sections, setSections] = useState([
-    {
-      id: "sec-1",
-      title: "Section 1: Core Fundamentals",
-      lessons: [
-        { id: "l-1", title: "Welcome to the course!", type: "video", duration: "02:15", url: "uploaded", description: "", isExpanded: false },
-        { id: "l-2", title: "Core Concepts Text", type: "article", duration: "05:00", url: "", description: "", isExpanded: false },
-        { id: "l-3", title: "Knowledge Check", type: "quiz", duration: "00:00", url: "", description: "", isExpanded: false }
-      ]
-    }
-  ]);
+interface CurriculumBuilderProps {
+  sections: SectionDraft[];
+  onChange: (sections: SectionDraft[]) => void;
+}
 
+// === MAIN CURRICULUM BUILDER ===
+export default function CurriculumBuilder({ sections, onChange }: CurriculumBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -249,17 +369,16 @@ export default function CurriculumBuilder() {
   const handleDragEnd = (sectionId: string, event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setSections(sections.map(sec => {
+      onChange(sections.map(sec => {
         if (sec.id === sectionId) {
           const oldIndex = sec.lessons.findIndex(item => item.id === active.id);
           const newIndex = sec.lessons.findIndex(item => item.id === over.id);
           const newLessons = arrayMove(sec.lessons, oldIndex, newIndex);
-          
-          // Force first lesson of first section to be video
+
           if (sectionId === sections[0].id && newLessons.length > 0 && newLessons[0].type !== 'video') {
             newLessons[0] = { ...newLessons[0], type: 'video' };
           }
-          
+
           return { ...sec, lessons: newLessons };
         }
         return sec;
@@ -268,27 +387,37 @@ export default function CurriculumBuilder() {
   };
 
   const addSection = () => {
-    setSections([...sections, {
+    onChange([...sections, {
       id: `sec-${Date.now()}`,
       title: `Section ${sections.length + 1}: New Section`,
-      lessons: []
+      lessons: [],
     }]);
   };
 
   const deleteSection = (sectionId: string) => {
-    setSections(sections.filter(s => s.id !== sectionId));
+    onChange(sections.filter(s => s.id !== sectionId));
   };
 
   const updateSectionTitle = (sectionId: string, title: string) => {
-    setSections(sections.map(s => s.id === sectionId ? { ...s, title } : s));
+    onChange(sections.map(s => s.id === sectionId ? { ...s, title } : s));
   };
 
   const addLesson = (sectionId: string) => {
-    setSections(sections.map(sec => {
+    onChange(sections.map(sec => {
       if (sec.id === sectionId) {
         return {
           ...sec,
-          lessons: [...sec.lessons, { id: `l-${Date.now()}`, title: "New Lesson", type: "video", duration: "00:00", url: "", description: "", isExpanded: true }]
+          lessons: [...sec.lessons, {
+            id: `l-${Date.now()}`,
+            title: "New Lesson",
+            type: "video" as LessonType,
+            duration: "",
+            url: "",
+            description: "",
+            isExpanded: true,
+            quizPassScore: 80,
+            quizQuestions: [],
+          }],
         };
       }
       return sec;
@@ -296,7 +425,7 @@ export default function CurriculumBuilder() {
   };
 
   const deleteLesson = (sectionId: string, lessonId: string) => {
-    setSections(sections.map(sec => {
+    onChange(sections.map(sec => {
       if (sec.id === sectionId) {
         return { ...sec, lessons: sec.lessons.filter(l => l.id !== lessonId) };
       }
@@ -305,7 +434,7 @@ export default function CurriculumBuilder() {
   };
 
   const toggleExpand = (sectionId: string, lessonId: string) => {
-    setSections(sections.map(sec => {
+    onChange(sections.map(sec => {
       if (sec.id === sectionId) {
         return { ...sec, lessons: sec.lessons.map(l => l.id === lessonId ? { ...l, isExpanded: !l.isExpanded } : l) };
       }
@@ -314,7 +443,7 @@ export default function CurriculumBuilder() {
   };
 
   const updateLesson = (sectionId: string, lessonId: string, field: string, value: any) => {
-    setSections(sections.map(sec => {
+    onChange(sections.map(sec => {
       if (sec.id === sectionId) {
         return { ...sec, lessons: sec.lessons.map(l => l.id === lessonId ? { ...l, [field]: value } : l) };
       }
@@ -332,9 +461,9 @@ export default function CurriculumBuilder() {
         <div key={section.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="bg-gray-50/80 p-4 border-b border-gray-200 flex items-center gap-3">
             <GripVertical className="w-5 h-5 text-gray-300" />
-            <input 
-              type="text" 
-              value={section.title} 
+            <input
+              type="text"
+              value={section.title}
               onChange={(e) => updateSectionTitle(section.id, e.target.value)}
               className="font-extrabold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 flex-1"
             />
@@ -348,13 +477,13 @@ export default function CurriculumBuilder() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(section.id, e)}>
               <SortableContext items={section.lessons} strategy={verticalListSortingStrategy}>
                 {section.lessons.map((lesson, lIndex) => (
-                  <SortableLessonItem 
-                    key={lesson.id} 
-                    lesson={lesson} 
+                  <SortableLessonItem
+                    key={lesson.id}
+                    lesson={lesson}
                     isFirstLesson={isGlobalFirstLesson(section.id, lIndex)}
-                    deleteLesson={(id: string) => deleteLesson(section.id, id)} 
-                    toggleExpand={(id: string) => toggleExpand(section.id, id)} 
-                    updateLesson={(id: string, field: string, value: any) => updateLesson(section.id, id, field, value)} 
+                    deleteLesson={(id: string) => deleteLesson(section.id, id)}
+                    toggleExpand={(id: string) => toggleExpand(section.id, id)}
+                    updateLesson={(id: string, field: string, value: any) => updateLesson(section.id, id, field, value)}
                   />
                 ))}
               </SortableContext>
