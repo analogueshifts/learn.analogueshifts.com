@@ -132,6 +132,7 @@ const LessonItem = ({ lesson, index, moduleIndex, isPreview, isEnrolled, onPrevi
 
 interface CurriculumAccordionProps {
   contents: Module[];
+  isEnrolled?: boolean;
 }
 
 export default function CurriculumAccordion({ contents, isEnrolled = false }: CurriculumAccordionProps) {

@@ -11,7 +11,9 @@ import CourseActionButtons from "@/components/application/courses/CourseActionBu
 import Image from "next/image";
 import HeroSvg from "@/assets/images/home/hero.svg";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { mapApiCourseToLegacy } from "@/lib/course-adapter";
 
 export default async function CourseDetailPage({
@@ -34,6 +36,14 @@ export default async function CourseDetailPage({
   if (!dbCourse || dbCourse.status !== "LIVE") {
     notFound();
   }
+
+  const session = await getServerSession(authOptions);
+  const enrollment = session?.user?.id
+    ? await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: session.user.id, courseId: dbCourse.id } },
+      })
+    : null;
+  const isEnrolled = !!enrollment;
 
   const course = mapApiCourseToLegacy(dbCourse);
 
@@ -148,7 +158,7 @@ export default async function CourseDetailPage({
                       Trainer Preview Mode
                     </Button>
                   ) : (
-                    <CourseActionButtons course={course} />
+                    <CourseActionButtons course={course} isEnrolled={isEnrolled} />
                   )}
                   
                   <p className="text-center text-sm text-gray-500 mb-6">30-Day Money-Back Guarantee</p>
@@ -244,7 +254,7 @@ export default async function CourseDetailPage({
                   <span className="text-sm text-gray-500 font-medium">{course.contents?.length || 0} sections</span>
                 </div>
                 
-                <CurriculumAccordion contents={course.contents || []} />
+                <CurriculumAccordion contents={course.contents || []} isEnrolled={isEnrolled} />
               </TabsContent>
               
               <TabsContent value="instructor" className="animate-in fade-in duration-500 pt-2">
@@ -396,7 +406,7 @@ export default async function CourseDetailPage({
                 Enrollment Disabled (Preview)
               </Button>
             ) : (
-              <CourseActionButtons course={course} variant="bottom" />
+              <CourseActionButtons course={course} variant="bottom" isEnrolled={isEnrolled} />
             )}
           </div>
           

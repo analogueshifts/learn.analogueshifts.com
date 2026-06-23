@@ -15,9 +15,10 @@ interface CourseActionButtonsProps {
     thumbnail?: string;
   };
   variant?: "floating" | "bottom";
+  isEnrolled?: boolean;
 }
 
-export default function CourseActionButtons({ course, variant = "floating" }: CourseActionButtonsProps) {
+export default function CourseActionButtons({ course, variant = "floating", isEnrolled = false }: CourseActionButtonsProps) {
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
 
@@ -37,6 +38,22 @@ export default function CourseActionButtons({ course, variant = "floating" }: Co
     addItem(cartItem);
     router.push("/checkout");
   };
+
+  const handleContinueLearning = () => {
+    router.push(`/courses/${course.slug}/learn`);
+  };
+
+  if (isEnrolled) {
+    const className =
+      variant === "bottom"
+        ? "h-14 px-8 text-lg font-bold bg-primary-tan hover:bg-gray-900 text-white rounded-xl shadow-xl hover:scale-105 transition-transform duration-300"
+        : "w-full h-14 text-lg font-bold bg-background-darkYellow hover:bg-yellow-600 text-white rounded-xl mb-4";
+    return (
+      <Button onClick={handleContinueLearning} className={className}>
+        Continue Learning
+      </Button>
+    );
+  }
 
   if (variant === "bottom") {
     return (
