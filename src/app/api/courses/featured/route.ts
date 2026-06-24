@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 

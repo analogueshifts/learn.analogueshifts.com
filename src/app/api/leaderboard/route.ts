@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { unstable_cache } from "next/cache";
 import { apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";

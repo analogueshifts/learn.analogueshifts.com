@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import GuestLayout from "@/components/application/layouts/guest";
 import CoursesBrowser from "@/components/application/courses/CoursesBrowser";
 import { prisma } from "@/lib/prisma";
