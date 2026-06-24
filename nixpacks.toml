@@ -1,0 +1,16 @@
+# Nixpacks configuration for Next.js + Prisma
+# This ensures that system packages are present, Prisma client is generated during build,
+# and database migrations run automatically on start.
+
+[phases.setup]
+aptPkgs = ["openssl"]
+
+[phases.build]
+cmds = [
+  "npm ci",
+  "npx prisma generate",
+  "npm run build"
+]
+
+[start]
+cmd = "npx prisma migrate deploy && npm run start"
