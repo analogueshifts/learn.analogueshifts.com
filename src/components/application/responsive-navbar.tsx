@@ -94,9 +94,38 @@ export default function ResponsiveNavBar({
             {/* Responsive Settings Options */}
             {user ? (
               <>
-                <ResponsiveNavLink onClick={handleLogout} href="">
-                  Logout
-                </ResponsiveNavLink>
+                <div className="border-t border-gray-100 my-4" />
+                <div className="px-4 py-2 bg-gray-50 rounded-xl mb-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Signed in as</p>
+                  <p className="text-sm font-bold text-primary-tan truncate">{user?.name || user?.email}</p>
+                  <span className="inline-flex items-center w-max px-2 py-0.5 rounded-full text-[9px] font-bold bg-background-darkYellow/10 text-background-darkYellow mt-1">
+                    {user?.role?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <ResponsiveNavLink href={
+                    user?.role?.toUpperCase() === "ADMIN" 
+                      ? "/admin" 
+                      : user?.role?.toUpperCase() === "TRAINER" 
+                      ? "/trainer/dashboard" 
+                      : "/student/dashboard"
+                  }>
+                    Dashboard
+                  </ResponsiveNavLink>
+                  <ResponsiveNavLink href={
+                    user?.role?.toUpperCase() === "ADMIN" 
+                      ? "/admin/profile" 
+                      : user?.role?.toUpperCase() === "TRAINER" 
+                      ? "/trainer/profile" 
+                      : "/student/profile"
+                  }>
+                    My Profile
+                  </ResponsiveNavLink>
+                  <div className="border-t border-gray-100 my-2" />
+                  <ResponsiveNavLink onClick={handleLogout} href="">
+                    Logout
+                  </ResponsiveNavLink>
+                </div>
               </>
             ) : (
               <>

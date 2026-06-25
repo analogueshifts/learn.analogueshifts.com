@@ -60,6 +60,13 @@ export default function ProfileSetupPage() {
     }
   }, [form]);
 
+  // Fallback to session name if session loads after mount
+  useEffect(() => {
+    if (session?.user?.name && !form.getValues("name")) {
+      form.setValue("name", session.user.name);
+    }
+  }, [session, form]);
+
   if (status === "loading") {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
@@ -126,6 +133,8 @@ export default function ProfileSetupPage() {
 
     if (pendingRegistration?.role === "Trainer") {
       router.push("/trainer/dashboard");
+    } else if (pendingRegistration?.role === "Student") {
+      router.push("/student/dashboard");
     } else {
       router.push("/");
     }

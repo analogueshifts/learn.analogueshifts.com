@@ -51,27 +51,32 @@ const mockNotifications = [
   { id: 4, title: "New Review", message: "You received a 5-star review from Michael Chen.", time: "Yesterday", read: true },
 ];
 
+import { useSession } from "next-auth/react";
+
 export default function TrainerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [trainerName, setTrainerName] = useState("Alex");
+  const [trainerName, setTrainerName] = useState("Instructor");
   const [unreadCount, setUnreadCount] = useState(mockNotifications.filter(n => !n.read).length);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('pendingUserRegistration');
-    let parsed: any = { role: "Trainer" };
-    if (storedUser) {
-      try {
-        parsed = { ...JSON.parse(storedUser), role: "Trainer" };
-        if (parsed.name) {
-          setTrainerName(parsed.name.split(' ')[0]);
+    if (session?.user?.name) {
+      setTrainerName(session.user.name);
+    } else {
+      const storedUser = localStorage.getItem('pendingUserRegistration');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed.name) {
+            setTrainerName(parsed.name);
+          }
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        // ignore
       }
     }
-    localStorage.setItem('pendingUserRegistration', JSON.stringify(parsed));
-  }, []);
+  }, [session]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#09090b] flex">

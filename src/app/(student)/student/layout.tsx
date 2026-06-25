@@ -51,30 +51,35 @@ const mockStudentNotifications = [
   { id: 4, title: "Certificate Earned", message: "Congratulations! You earned a certificate in Frontend Basics.", time: "3 days ago", read: true },
 ]
 
+import { useSession } from "next-auth/react"
+
 export default function StudentLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [studentName, setStudentName] = React.useState("Student User")
   const [unreadCount, setUnreadCount] = React.useState(mockStudentNotifications.filter(n => !n.read).length)
 
   React.useEffect(() => {
-    const storedUser = localStorage.getItem('pendingUserRegistration');
-    let parsed: any = { role: "Student" };
-    if (storedUser) {
-      try {
-        parsed = { ...JSON.parse(storedUser), role: "Student" };
-        if (parsed.name) {
-          setStudentName(parsed.name.split(' ')[0]);
+    if (session?.user?.name) {
+      setStudentName(session.user.name);
+    } else {
+      const storedUser = localStorage.getItem('pendingUserRegistration');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed.name) {
+            setStudentName(parsed.name);
+          }
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        // ignore
       }
     }
-    localStorage.setItem('pendingUserRegistration', JSON.stringify(parsed));
-  }, []);
+  }, [session]);
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">

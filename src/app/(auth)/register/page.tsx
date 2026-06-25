@@ -73,6 +73,15 @@ export default function RegisterPage() {
       redirect: false,
     });
 
+    localStorage.setItem(
+      "pendingUserRegistration",
+      JSON.stringify({
+        name: `${formValues.firstName} ${formValues.lastName}`,
+        email: formValues.email,
+        role,
+      })
+    );
+
     window.location.href = "/profile-setup";
   }
 

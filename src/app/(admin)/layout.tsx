@@ -55,30 +55,35 @@ const mockAdminNotifications = [
   { id: 4, title: "Payout Processed", message: "Batch payout #3042 has been successfully completed.", time: "3h ago", read: true },
 ]
 
+import { useSession } from "next-auth/react"
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [adminName, setAdminName] = React.useState("Super Admin")
   const [unreadCount, setUnreadCount] = React.useState(mockAdminNotifications.filter(n => !n.read).length)
 
   React.useEffect(() => {
-    const storedUser = localStorage.getItem('pendingUserRegistration');
-    let parsed: any = { role: "Admin" };
-    if (storedUser) {
-      try {
-        parsed = { ...JSON.parse(storedUser), role: "Admin" };
-        if (parsed.name) {
-          setAdminName(parsed.name.split(' ')[0]);
+    if (session?.user?.name) {
+      setAdminName(session.user.name);
+    } else {
+      const storedUser = localStorage.getItem('pendingUserRegistration');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed.name) {
+            setAdminName(parsed.name);
+          }
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        // ignore
       }
     }
-    localStorage.setItem('pendingUserRegistration', JSON.stringify(parsed));
-  }, []);
+  }, [session]);
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
