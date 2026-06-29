@@ -3,6 +3,7 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { signOut } from "next-auth/react"
 import {
   LayoutDashboard,
   Users,
@@ -48,14 +49,15 @@ const navigation = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
-const mockAdminNotifications = [
-  { id: 1, title: "New Message from Alex (Trainer)", message: "Hi Admin, my recent payout seems to be stuck in pending.", time: "1m ago", read: false },
-  { id: 2, title: "New Trainer Application", message: "John Doe applied to become a trainer.", time: "5m ago", read: false },
-  { id: 3, title: "System Alert", message: "High server load detected in region US-East.", time: "1h ago", read: false },
-  { id: 4, title: "Payout Processed", message: "Batch payout #3042 has been successfully completed.", time: "3h ago", read: true },
-]
-
 import { useSession } from "next-auth/react"
+
+interface AdminNotificationItem {
+  id: string
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
 
 export default function AdminLayout({
   children,
@@ -65,7 +67,21 @@ export default function AdminLayout({
   const pathname = usePathname()
   const { data: session } = useSession()
   const [adminName, setAdminName] = React.useState("Super Admin")
-  const [unreadCount, setUnreadCount] = React.useState(mockAdminNotifications.filter(n => !n.read).length)
+  const [notifications, setNotifications] = React.useState<AdminNotificationItem[]>([])
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  React.useEffect(() => {
+    fetch("/api/admin/notifications")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setNotifications(body.data)
+      })
+  }, [])
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    fetch(`/api/admin/notifications/${id}`, { method: "PATCH" })
+  }
 
   React.useEffect(() => {
     if (session?.user?.name) {
@@ -166,26 +182,30 @@ export default function AdminLayout({
                     )}
                   </DropdownMenuLabel>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {mockAdminNotifications.map((notif) => (
-                      <div 
-                        key={notif.id} 
-                        className={cn(
-                          "p-4 border-b border-border/50 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors",
-                          !notif.read ? "bg-muted/10" : ""
-                        )}
-                        onClick={() => {
-                          if (!notif.read) setUnreadCount(prev => Math.max(0, prev - 1));
-                        }}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className={cn("text-sm font-semibold", !notif.read ? "text-foreground" : "text-muted-foreground")}>
-                            {notif.title}
-                          </h4>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{notif.time}</span>
+                    {notifications.length === 0 ? (
+                      <p className="p-4 text-sm text-muted-foreground text-center">No notifications yet.</p>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={cn(
+                            "p-4 border-b border-border/50 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors",
+                            !notif.read ? "bg-muted/10" : ""
+                          )}
+                          onClick={() => {
+                            if (!notif.read) markNotificationRead(notif.id);
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className={cn("text-sm font-semibold", !notif.read ? "text-foreground" : "text-muted-foreground")}>
+                              {notif.title}
+                            </h4>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-snug">{notif.message}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground leading-snug">{notif.message}</p>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                   <div className="p-2 border-t border-border/50 bg-muted/10">
                     <DropdownMenuItem asChild className="p-0">
@@ -243,7 +263,7 @@ export default function AdminLayout({
                     className="cursor-pointer rounded-md text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
                     onClick={() => {
                       localStorage.removeItem('pendingUserRegistration');
-                      window.location.href = '/';
+                      signOut({ callbackUrl: '/' });
                     }}
                   >
                     <LogOut className="mr-2 w-4 h-4" />

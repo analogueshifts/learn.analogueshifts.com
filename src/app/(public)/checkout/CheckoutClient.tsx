@@ -1,19 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, ShieldCheck, Trash2, Lock } from "lucide-react";
-import GatewaySelector, { PaymentGateway } from "@/components/application/checkout/GatewaySelector";
+import { CreditCard, ShieldCheck, Trash2, Lock } from "lucide-react";
 import CouponInput from "@/components/application/checkout/CouponInput";
 import { useCartStore } from "@/store/useCartStore";
 import dynamic from "next/dynamic";
 
 const PaystackButton = dynamic(() => import("@/components/application/checkout/PaystackButton"), { ssr: false });
-const FlutterwaveButton = dynamic(() => import("@/components/application/checkout/FlutterwaveButton"), { ssr: false });
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function CheckoutClient() {
-  const [gateway, setGateway] = useState<PaymentGateway>("paystack");
   const [discount, setDiscount] = useState(0);
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
   const cartItems = useCartStore((state) => state.items);
@@ -68,8 +65,17 @@ export default function CheckoutClient() {
             <p className="text-lg text-gray-500">Complete your enrollment below to instantly unlock course access.</p>
           </div>
 
-          <div className="space-y-6">
-            <GatewaySelector selected={gateway} onSelect={setGateway} />
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Payment Method</h3>
+            <div className="relative flex items-center gap-4 p-5 rounded-2xl border-2 border-background-darkYellow bg-yellow-50/50">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center border bg-white border-background-darkYellow/30 shadow-sm">
+                <CreditCard className="w-6 h-6 text-background-darkYellow" />
+              </div>
+              <div>
+                <span className="font-bold text-gray-900 text-[15px] block">Paystack</span>
+                <span className="text-[13px] text-gray-500 font-medium">Cards, Bank Transfers, USSD</span>
+              </div>
+            </div>
           </div>
 
           <div className="pt-8 border-t border-gray-100 space-y-6">
@@ -77,22 +83,13 @@ export default function CheckoutClient() {
               <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Payment</h3>
               <p className="text-sm text-gray-500 mb-6">All transactions are secure and encrypted.</p>
             </div>
-            
+
             <div className="max-w-md">
-              {gateway === "paystack" && (
-                <PaystackButton
-                  courseIds={cartItems.map((item) => item.id)}
-                  couponCode={appliedCouponCode}
-                  onSuccess={handlePaymentSuccess}
-                />
-              )}
-              {gateway === "flutterwave" && (
-                <FlutterwaveButton
-                  courseIds={cartItems.map((item) => item.id)}
-                  couponCode={appliedCouponCode}
-                  onSuccess={handlePaymentSuccess}
-                />
-              )}
+              <PaystackButton
+                courseIds={cartItems.map((item) => item.id)}
+                couponCode={appliedCouponCode}
+                onSuccess={handlePaymentSuccess}
+              />
             </div>
             
             <div className="flex items-center gap-2 text-sm font-medium text-gray-400 pt-4">

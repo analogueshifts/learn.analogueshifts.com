@@ -24,5 +24,29 @@ export async function fulfillOrder(orderId: string) {
       : []),
   ]);
 
+  const courses = await prisma.course.findMany({
+    where: { id: { in: order.items.map((item) => item.courseId) } },
+    select: { id: true, title: true, trainerId: true },
+  });
+
+  await prisma.notification.createMany({
+    data: courses.flatMap((course) => [
+      {
+        userId: order.userId,
+        type: "SUCCESS" as const,
+        title: "Enrollment confirmed",
+        message: `You're enrolled in "${course.title}". Happy learning!`,
+        actionUrl: "/student/my-courses",
+      },
+      {
+        userId: course.trainerId,
+        type: "INFO" as const,
+        title: "New enrollment",
+        message: `A new student enrolled in "${course.title}".`,
+        actionUrl: "/trainer/analytics",
+      },
+    ]),
+  });
+
   return order;
 }

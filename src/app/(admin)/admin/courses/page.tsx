@@ -10,7 +10,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from "@tanstack/react-table"
-import { MoreHorizontal, Search, Star, Users, CheckCircle, Clock, Archive, PenTool, Loader2 } from "lucide-react"
+import { MoreHorizontal, Search, Star, Users, CheckCircle, Clock, Archive, PenTool, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -72,6 +72,18 @@ export default function CoursesPage() {
       toast.success(`Course status updated to ${newStatus}`)
     } else {
       toast.error(body.error ?? "Failed to update status")
+    }
+  }
+
+  const handleDelete = async (course: Course) => {
+    if (!window.confirm(`Delete "${course.title}"? This can't be undone.`)) return
+    const response = await fetch(`/api/admin/courses/${course.id}`, { method: "DELETE" })
+    const body = await response.json()
+    if (body.success) {
+      setData((prev) => prev.filter((c) => c.id !== course.id))
+      toast.success("Course deleted")
+    } else {
+      toast.error(body.error ?? "Failed to delete course")
     }
   }
 
@@ -180,6 +192,15 @@ export default function CoursesPage() {
                     <PenTool className="mr-2 h-4 w-4" /> Restore to Draft
                   </DropdownMenuItem>
                 )}
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                  onClick={() => handleDelete(course)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Course
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

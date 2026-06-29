@@ -3,6 +3,7 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   BookOpen,
@@ -44,14 +45,13 @@ const navigation = [
   { name: "Certificates", href: "/student/certificates", icon: Award },
 ]
 
-const mockStudentNotifications = [
-  { id: 1, title: "Upcoming Live Session", message: "Your Advanced React class starts in 15 minutes. Join now!", time: "Just now", read: false },
-  { id: 2, title: "Course Material Updated", message: "New module unlocked: 'State Management Patterns'.", time: "2h ago", read: false },
-  { id: 3, title: "Assignment Graded", message: "Instructor Sarah evaluated your Final Project. You scored 95%!", time: "Yesterday", read: true },
-  { id: 4, title: "Certificate Earned", message: "Congratulations! You earned a certificate in Frontend Basics.", time: "3 days ago", read: true },
-]
-
-import { useSession } from "next-auth/react"
+interface StudentNotificationItem {
+  id: string
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
 
 export default function StudentLayout({
   children,
@@ -61,7 +61,21 @@ export default function StudentLayout({
   const pathname = usePathname()
   const { data: session } = useSession()
   const [studentName, setStudentName] = React.useState("Student User")
-  const [unreadCount, setUnreadCount] = React.useState(mockStudentNotifications.filter(n => !n.read).length)
+  const [notifications, setNotifications] = React.useState<StudentNotificationItem[]>([])
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  React.useEffect(() => {
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setNotifications(body.data)
+      })
+  }, [])
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    fetch(`/api/notifications/${id}`, { method: "PATCH" })
+  }
 
   React.useEffect(() => {
     if (session?.user?.name) {
@@ -160,26 +174,30 @@ export default function StudentLayout({
                     )}
                   </DropdownMenuLabel>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {mockStudentNotifications.map((notif) => (
-                      <div 
-                        key={notif.id} 
-                        className={cn(
-                          "p-4 border-b border-border/50 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors",
-                          !notif.read ? "bg-muted/10" : ""
-                        )}
-                        onClick={() => {
-                          if (!notif.read) setUnreadCount(prev => Math.max(0, prev - 1));
-                        }}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className={cn("text-sm font-semibold", !notif.read ? "text-foreground" : "text-muted-foreground")}>
-                            {notif.title}
-                          </h4>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{notif.time}</span>
+                    {notifications.length === 0 ? (
+                      <p className="p-4 text-sm text-muted-foreground text-center">No notifications yet.</p>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={cn(
+                            "p-4 border-b border-border/50 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors",
+                            !notif.read ? "bg-muted/10" : ""
+                          )}
+                          onClick={() => {
+                            if (!notif.read) markNotificationRead(notif.id);
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className={cn("text-sm font-semibold", !notif.read ? "text-foreground" : "text-muted-foreground")}>
+                              {notif.title}
+                            </h4>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-snug">{notif.message}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground leading-snug">{notif.message}</p>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                   <div className="p-2 border-t border-border/50 bg-muted/10">
                     <DropdownMenuItem asChild className="p-0">
@@ -230,7 +248,7 @@ export default function StudentLayout({
                     className="cursor-pointer rounded-md text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
                     onClick={() => {
                       localStorage.removeItem('pendingUserRegistration');
-                      window.location.href = '/';
+                      signOut({ callbackUrl: '/' });
                     }}
                   >
                     <LogOut className="mr-2 w-4 h-4" />

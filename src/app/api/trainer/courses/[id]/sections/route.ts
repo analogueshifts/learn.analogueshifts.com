@@ -28,3 +28,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   return apiSuccess(section, 201);
 }
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const trainer = await requireTrainer();
+  if (!trainer) return apiError("Forbidden", 403);
+
+  const { id } = await params;
+  const course = await getOwnedCourse(id, trainer.id, trainer.role === "ADMIN");
+  if (!course) return apiError("Course not found", 404);
+
+  await prisma.section.deleteMany({ where: { courseId: id } });
+  return apiSuccess({ id });
+}

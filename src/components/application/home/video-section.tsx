@@ -29,17 +29,7 @@ export default function VideoSection() {
               Join thousands of students who have already transformed their careers through our expertly crafted curriculum. Don&apos;t wait to achieve your goals!
             </p>
             <div className="flex items-center gap-4">
-              <Link 
-                href="/"
-                onClick={(e) => {
-                  if (window.location.pathname === "/") {
-                    e.preventDefault();
-                    document.getElementById('featured-courses')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    sessionStorage.setItem("scrollTarget", "featured-courses");
-                  }
-                }}
-              >
+              <Link href="/courses">
                 <Button className="h-14 px-8 text-lg font-bold bg-primary-tan hover:bg-gray-900 text-white rounded-xl shadow-xl hover:scale-105 transition-all duration-300">
                   Start Learning Now
                 </Button>

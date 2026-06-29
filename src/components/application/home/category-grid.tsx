@@ -1,29 +1,42 @@
 "use client";
 
-import { 
-  Code2, 
-  Terminal, 
-  Database, 
-  Cloud, 
-  Smartphone, 
-  PenTool, 
-  LineChart, 
+import { useEffect, useState } from "react";
+import {
+  Code2,
+  Terminal,
+  Database,
+  Cloud,
+  Smartphone,
+  PenTool,
+  LineChart,
   Shield,
-  ArrowRight
+  PenSquare,
+  BookOpen,
+  ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-const CATEGORIES = [
-  { name: "Web Development", icon: Code2, count: 120, slug: "web-development" },
-  { name: "DevOps", icon: Terminal, count: 85, slug: "devops" },
-  { name: "Data Science", icon: Database, count: 64, slug: "data-science" },
-  { name: "Cloud Computing", icon: Cloud, count: 92, slug: "cloud-computing" },
-  { name: "Mobile Dev", icon: Smartphone, count: 45, slug: "mobile-development" },
-  { name: "UI/UX Design", icon: PenTool, count: 78, slug: "design" },
-  { name: "Marketing", icon: LineChart, count: 32, slug: "marketing" },
-  { name: "Cybersecurity", icon: Shield, count: 56, slug: "cybersecurity" },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  courseCount: number;
+}
+
+const ICON_BY_NAME: Record<string, LucideIcon> = {
+  "Web Development": Code2,
+  "DevOps": Terminal,
+  "Data Science": Database,
+  "Cloud Computing": Cloud,
+  "Mobile Development": Smartphone,
+  "UI/UX Design": PenTool,
+  "Marketing": LineChart,
+  "Cybersecurity": Shield,
+  "Copywriting": PenSquare,
+  "Backend Engineering": Terminal,
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,6 +52,22 @@ const itemVariants = {
 };
 
 export default function CategoryGrid() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) {
+          setCategories(
+            [...body.data].sort((a, b) => b.courseCount - a.courseCount).slice(0, 8)
+          );
+        }
+      });
+  }, []);
+
+  if (categories.length === 0) return null;
+
   return (
     <section id="category-grid" className="py-16 lg:py-20 px-6 lg:px-24 bg-primary-tan relative overflow-hidden">
       {/* Background Ambience */}
@@ -75,18 +104,18 @@ export default function CategoryGrid() {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {CATEGORIES.map((category) => {
-            const Icon = category.icon;
+          {categories.map((category) => {
+            const Icon = ICON_BY_NAME[category.name] ?? BookOpen;
             return (
-              <motion.div key={category.slug} variants={itemVariants}>
-                <Link 
+              <motion.div key={category.id} variants={itemVariants}>
+                <Link
                   href={`/courses?category=${category.slug}`}
                   onClick={() => typeof window !== 'undefined' && sessionStorage.setItem('scrollBackAnchor', 'category-grid')}
                   className="block relative p-5 lg:p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-background-darkYellow/50 transition-all duration-300 group overflow-hidden"
                 >
                   {/* Hover gradient backdrop */}
                   <div className="absolute inset-0 bg-gradient-to-br from-background-darkYellow/0 to-background-darkYellow/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+
                   <div className="relative z-10 flex flex-col items-start text-left">
                     <div className="w-12 h-12 bg-white/10 text-background-darkYellow rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-background-darkYellow group-hover:text-primary-tan transition-all duration-300 shadow-md">
                       <Icon className="w-6 h-6" />
@@ -96,7 +125,7 @@ export default function CategoryGrid() {
                     </h3>
                     <p className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-500 group-hover:bg-background-darkYellow transition-colors" />
-                      {category.count} Courses
+                      {category.courseCount} Courses
                     </p>
                   </div>
                 </Link>

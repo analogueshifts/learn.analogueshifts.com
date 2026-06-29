@@ -1,49 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Send, Users, History, Megaphone, Globe, Inbox, Search, CheckCircle, User as UserIcon } from "lucide-react";
+import { Send, Users, History, Megaphone, Globe, Inbox, Search, CheckCircle, User as UserIcon, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-const systemAudiences = [
-  { id: "all", title: "All Registered Users", count: 15420 },
-  { id: "trainers", title: "All Trainers & Instructors", count: 342 },
-  { id: "students", title: "All Enrolled Students", count: 12045 },
-  { id: "admins", title: "System Administrators", count: 8 },
-  { id: "specific", title: "Specific User (Student/Trainer/Admin)", count: 1 },
+type Audience = "ALL" | "STUDENTS" | "TRAINERS" | "INDIVIDUAL";
+
+const AUDIENCES: { id: Audience; title: string }[] = [
+  { id: "ALL", title: "All Registered Users" },
+  { id: "TRAINERS", title: "All Trainers & Instructors" },
+  { id: "STUDENTS", title: "All Enrolled Students" },
+  { id: "INDIVIDUAL", title: "Specific User (Student/Trainer/Admin)" },
 ];
 
-const mockUsersList = [
-  { id: "u1", name: "Alex (Trainer)", email: "alex@analogueshifts.com", role: "Trainer" },
-  { id: "u2", name: "Sarah Jenkins", email: "sarah.j@example.com", role: "Student" },
-  { id: "u3", name: "David Kim", email: "david.k@example.com", role: "Admin" },
-  { id: "u4", name: "Michael Chen", email: "m.chen@example.com", role: "Student" },
-  { id: "u5", name: "Elena Rodriguez", email: "elena.r@example.com", role: "Student" },
-];
+interface UserOption {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
-const mockAdminInbox = [
-  { id: 1, sender: "Alex (Trainer)", role: "trainer", subject: "Payout Issue", message: "Hi Admin, my recent payout seems to be stuck in pending.", time: "30m ago", read: false },
-  { id: 2, sender: "Sarah Jenkins", role: "student", subject: "Refund Request", message: "I purchased the wrong course by accident.", time: "1h ago", read: false },
-  { id: 3, sender: "David (Admin)", role: "admin", subject: "Server Status", message: "Database maintenance will start at 2 AM tonight.", time: "Yesterday", read: true },
-];
+interface InboxMessage {
+  id: string;
+  subject: string;
+  body: string;
+  audience: string;
+  createdAt: string;
+  isRead: boolean;
+  sender: { name: string; role: string; avatar: string | null };
+}
+
+interface SentMessage {
+  id: string;
+  subject: string;
+  body: string;
+  audience: string;
+  recipientName: string | null;
+  createdAt: string;
+  recipientCount: number;
+  readCount: number;
+}
 
 export default function AdminMessagesPage() {
   const [isSending, setIsSending] = useState(false);
-  const [selectedAudience, setSelectedAudience] = useState("all");
+  const [selectedAudience, setSelectedAudience] = useState<Audience>("ALL");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  
-  // Custom Dropdown State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<{name: string, email: string} | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [audienceCount, setAudienceCount] = useState<number | null>(null);
 
-  const handleSend = () => {
-    if (selectedAudience === "specific" && !selectedUser) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userResults, setUserResults] = useState<UserOption[]>([]);
+
+  const [inbox, setInbox] = useState<InboxMessage[]>([]);
+  const [isLoadingInbox, setIsLoadingInbox] = useState(true);
+  const [sent, setSent] = useState<SentMessage[]>([]);
+  const [inboxSearch, setInboxSearch] = useState("");
+
+  const loadInbox = () => {
+    setIsLoadingInbox(true);
+    fetch("/api/messages")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setInbox(body.data);
+      })
+      .finally(() => setIsLoadingInbox(false));
+  };
+
+  const loadSent = () => {
+    fetch("/api/messages?folder=sent")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setSent(body.data);
+      });
+  };
+
+  useEffect(() => {
+    loadInbox();
+    loadSent();
+  }, []);
+
+  useEffect(() => {
+    if (selectedAudience === "INDIVIDUAL") {
+      setAudienceCount(selectedUser ? 1 : 0);
+      return;
+    }
+    const roleParam = selectedAudience === "STUDENTS" ? "STUDENT" : selectedAudience === "TRAINERS" ? "TRAINER" : "";
+    fetch(`/api/admin/users${roleParam ? `?role=${roleParam}` : ""}`)
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setAudienceCount(body.data.length);
+      });
+  }, [selectedAudience, selectedUser]);
+
+  useEffect(() => {
+    if (selectedAudience !== "INDIVIDUAL" || !searchQuery.trim()) {
+      setUserResults([]);
+      return;
+    }
+    const handle = setTimeout(() => {
+      fetch(`/api/admin/users?q=${encodeURIComponent(searchQuery)}`)
+        .then((res) => res.json())
+        .then((body) => {
+          if (body.success) setUserResults(body.data);
+        });
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [searchQuery, selectedAudience]);
+
+  const markAsRead = (id: string) => {
+    setInbox((prev) => prev.map((m) => (m.id === id ? { ...m, isRead: true } : m)));
+    fetch(`/api/messages/${id}`, { method: "PATCH" });
+  };
+
+  const markAllAsRead = async () => {
+    setInbox((prev) => prev.map((m) => ({ ...m, isRead: true })));
+    await fetch("/api/messages/mark-all-read", { method: "POST" });
+  };
+
+  const handleSend = async () => {
+    if (selectedAudience === "INDIVIDUAL" && !selectedUser) {
       toast.error("Please select a user from the list.");
       return;
     }
@@ -51,24 +133,40 @@ export default function AdminMessagesPage() {
       toast.error("Please enter both a subject and message.");
       return;
     }
-    
+
     setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setSubject("");
-      setMessage("");
-      setSearchQuery("");
-      setSelectedUser(null);
-      toast.success(selectedAudience === "specific" ? "Message sent directly to user!" : "System Broadcast sent successfully!");
-    }, 1500);
+    const response = await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audience: selectedAudience,
+        recipientId: selectedAudience === "INDIVIDUAL" ? selectedUser?.id : undefined,
+        subject,
+        body: message,
+      }),
+    });
+    const body = await response.json();
+    setIsSending(false);
+
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to send broadcast");
+      return;
+    }
+
+    setSubject("");
+    setMessage("");
+    setSearchQuery("");
+    setSelectedUser(null);
+    toast.success(selectedAudience === "INDIVIDUAL" ? "Message sent directly to user!" : "Broadcast sent successfully!");
+    loadSent();
   };
 
-  const selectedAudienceData = systemAudiences.find(a => a.id === selectedAudience);
-  
-  const filteredUsers = mockUsersList.filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredInbox = inbox.filter(
+    (m) =>
+      m.subject.toLowerCase().includes(inboxSearch.toLowerCase()) ||
+      m.sender.name.toLowerCase().includes(inboxSearch.toLowerCase())
   );
+  const unreadCount = inbox.filter((m) => !m.isRead).length;
 
   return (
     <div className="space-y-8 pb-20">
@@ -95,37 +193,54 @@ export default function AdminMessagesPage() {
             <div className="border-b border-border/50 p-4 bg-muted/10 flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="relative w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search messages, users, tickets..." className="pl-10 h-10 bg-white dark:bg-muted/20 border-border/50 rounded-lg" />
+                <Input
+                  placeholder="Search messages, users, tickets..."
+                  value={inboxSearch}
+                  onChange={(e) => setInboxSearch(e.target.value)}
+                  className="pl-10 h-10 bg-white dark:bg-muted/20 border-border/50 rounded-lg"
+                />
               </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto font-bold border-border/50">
-                <CheckCircle className="w-4 h-4 mr-2" /> Mark All as Read
-              </Button>
+              {unreadCount > 0 && (
+                <Button variant="outline" size="sm" className="w-full sm:w-auto font-bold border-border/50" onClick={markAllAsRead}>
+                  <CheckCircle className="w-4 h-4 mr-2" /> Mark All as Read
+                </Button>
+              )}
             </div>
             <div className="divide-y divide-border/50">
-              {mockAdminInbox.map((msg) => (
-                <div key={msg.id} className={`p-6 hover:bg-muted/30 transition-colors cursor-pointer flex gap-4 ${!msg.read ? 'bg-muted/10' : ''}`}>
-                  <div className="mt-1 shrink-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      msg.role === 'admin' ? 'bg-red-100 text-red-600 dark:bg-red-950/30' : 
-                      msg.role === 'trainer' ? 'bg-[#FFBB0A]/20 text-[#FFBB0A]' : 
-                      'bg-[#0F2942] text-white'
-                    }`}>
-                      <UserIcon className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold text-sm ${!msg.read ? 'text-foreground' : 'text-foreground/80'}`}>{msg.sender}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground text-[10px] font-bold uppercase tracking-wide">{msg.role}</span>
+              {isLoadingInbox ? (
+                <div className="p-12 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+              ) : filteredInbox.length === 0 ? (
+                <p className="p-12 text-sm text-muted-foreground text-center">No messages yet.</p>
+              ) : (
+                filteredInbox.map((msg) => (
+                  <div
+                    key={msg.id}
+                    onClick={() => !msg.isRead && markAsRead(msg.id)}
+                    className={`p-6 hover:bg-muted/30 transition-colors cursor-pointer flex gap-4 ${!msg.isRead ? 'bg-muted/10' : ''}`}
+                  >
+                    <div className="mt-1 shrink-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        msg.sender.role === 'ADMIN' ? 'bg-red-100 text-red-600 dark:bg-red-950/30' :
+                        msg.sender.role === 'TRAINER' ? 'bg-[#FFBB0A]/20 text-[#FFBB0A]' :
+                        'bg-[#0F2942] text-white'
+                      }`}>
+                        <UserIcon className="w-5 h-5" />
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{msg.time}</span>
                     </div>
-                    <h4 className={`text-sm ${!msg.read ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>{msg.subject}</h4>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{msg.message}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-bold text-sm ${!msg.isRead ? 'text-foreground' : 'text-foreground/80'}`}>{msg.sender.name}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground text-[10px] font-bold uppercase tracking-wide">{msg.sender.role.toLowerCase()}</span>
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <h4 className={`text-sm ${!msg.isRead ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>{msg.subject}</h4>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{msg.body}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
         </TabsContent>
@@ -139,33 +254,33 @@ export default function AdminMessagesPage() {
                   <Megaphone className="w-5 h-5 text-[#0F2942] dark:text-[#FFBB0A]" />
                   Compose Global Broadcast
                 </CardTitle>
-                <CardDescription>Broadcasts bypass standard notification preferences and deliver immediately via email and dashboard alerts.</CardDescription>
+                <CardDescription>Broadcasts deliver immediately to each recipient&apos;s dashboard inbox and notifications.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 lg:p-8 space-y-6">
-                
+
                 <div className="space-y-3">
                   <Label className="text-sm font-bold text-foreground">Target Audience</Label>
-                  <select 
+                  <select
                     value={selectedAudience}
                     onChange={(e) => {
-                      setSelectedAudience(e.target.value);
+                      setSelectedAudience(e.target.value as Audience);
                       setSelectedUser(null);
                       setSearchQuery("");
                     }}
                     className="w-full h-12 rounded-xl border border-border/50 bg-muted/20 px-4 text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] transition-all"
                   >
-                    {systemAudiences.map(a => (
-                      <option key={a.id} value={a.id}>{a.title} {a.id !== 'specific' && `(~${a.count.toLocaleString()} users)`}</option>
+                    {AUDIENCES.map(a => (
+                      <option key={a.id} value={a.id}>{a.title}</option>
                     ))}
                   </select>
                 </div>
 
-                {selectedAudience === "specific" && (
+                {selectedAudience === "INDIVIDUAL" && (
                   <div className="space-y-3 animate-in fade-in slide-in-from-top-2 relative">
                     <Label className="text-sm font-bold text-foreground">Select a User</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input 
+                      <Input
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => {
@@ -175,15 +290,15 @@ export default function AdminMessagesPage() {
                         }}
                         onFocus={() => setIsDropdownOpen(true)}
                         onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                        className="pl-10 h-12 bg-white dark:bg-muted/20 border-border/50 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] rounded-xl text-base font-medium" 
+                        className="pl-10 h-12 bg-white dark:bg-muted/20 border-border/50 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] rounded-xl text-base font-medium"
                       />
                     </div>
-                    {isDropdownOpen && (
+                    {isDropdownOpen && searchQuery.trim() && (
                       <div className="absolute z-20 w-full mt-1 bg-white dark:bg-[#1A1A1A] border border-border/50 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                        {filteredUsers.length > 0 ? (
-                          filteredUsers.map(user => (
-                            <div 
-                              key={user.id} 
+                        {userResults.length > 0 ? (
+                          userResults.map(user => (
+                            <div
+                              key={user.id}
                               className="p-3 hover:bg-muted/50 cursor-pointer flex justify-between items-center border-b border-border/50 last:border-0"
                               onClick={() => {
                                 setSelectedUser(user);
@@ -195,7 +310,7 @@ export default function AdminMessagesPage() {
                                 <span className="font-bold text-sm text-foreground">{user.name}</span>
                                 <span className="text-xs text-muted-foreground">{user.email}</span>
                               </div>
-                              <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{user.role}</span>
+                              <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{user.role.toLowerCase()}</span>
                             </div>
                           ))
                         ) : (
@@ -208,17 +323,17 @@ export default function AdminMessagesPage() {
 
                 <div className="space-y-3">
                   <Label className="text-sm font-bold text-foreground">Broadcast Subject</Label>
-                  <Input 
+                  <Input
                     placeholder="e.g. Platform Maintenance Schedule"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="h-12 bg-muted/20 border-border/50 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] rounded-xl text-base font-medium" 
+                    className="h-12 bg-muted/20 border-border/50 focus-visible:ring-[#0F2942] dark:focus-visible:ring-[#FFBB0A] rounded-xl text-base font-medium"
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-sm font-bold text-foreground">Message Content (Markdown Supported)</Label>
-                  <textarea 
+                  <Label className="text-sm font-bold text-foreground">Message Content</Label>
+                  <textarea
                     rows={10}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -231,9 +346,9 @@ export default function AdminMessagesPage() {
               <CardFooter className="p-6 lg:p-8 bg-muted/5 border-t border-border/50 flex justify-between items-center">
                 <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  Reaching {selectedAudience === 'specific' ? '1 specific user' : `~${selectedAudienceData?.count.toLocaleString()} users`}
+                  Reaching {audienceCount === null ? "…" : `~${audienceCount.toLocaleString()} user${audienceCount === 1 ? "" : "s"}`}
                 </p>
-                <Button 
+                <Button
                   className="bg-[#0F2942] hover:bg-[#0F2942]/90 text-white font-bold h-12 px-8 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5"
                   onClick={handleSend}
                   disabled={isSending}
@@ -253,26 +368,26 @@ export default function AdminMessagesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y divide-border/50">
-                  {[
-                    { title: "System Scheduled Maintenance", audience: "All Users", date: "Oct 24", opens: "68%" },
-                    { title: "New Trainer Guidelines Fall 2023", audience: "Trainers", date: "Sep 12", opens: "94%" },
-                    { title: "Important: Update your payout details", audience: "Trainers", date: "Aug 05", opens: "98%" },
-                    { title: "Welcome to the new AnalogueShifts!", audience: "All Users", date: "Jan 01", opens: "82%" },
-                  ].map((b, i) => (
-                    <div key={i} className="p-6 hover:bg-muted/30 transition-colors">
-                      <h4 className="font-bold text-sm text-foreground line-clamp-1 mb-1">{b.title}</h4>
-                      <p className="text-xs font-medium text-muted-foreground mb-3">{b.audience} • {b.date}</p>
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-muted-foreground">Open Rate</span>
-                        <span className="text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">{b.opens}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-4 border-t border-border/50">
-                  <Button variant="ghost" className="w-full h-9 text-xs font-bold">View Full Analytics</Button>
-                </div>
+                {sent.length === 0 ? (
+                  <p className="p-6 text-sm text-muted-foreground">No broadcasts sent yet.</p>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {sent.map((b) => {
+                      const openRate = b.recipientCount > 0 ? Math.round((b.readCount / b.recipientCount) * 100) : 0;
+                      const audienceLabel = b.audience === "INDIVIDUAL" ? (b.recipientName ?? "Individual") : AUDIENCES.find(a => a.id === b.audience)?.title ?? b.audience;
+                      return (
+                        <div key={b.id} className="p-6 hover:bg-muted/30 transition-colors">
+                          <h4 className="font-bold text-sm text-foreground line-clamp-1 mb-1">{b.subject}</h4>
+                          <p className="text-xs font-medium text-muted-foreground mb-3">{audienceLabel} • {new Date(b.createdAt).toLocaleDateString()}</p>
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span className="text-muted-foreground">Open Rate ({b.readCount}/{b.recipientCount})</span>
+                            <span className="text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">{openRate}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

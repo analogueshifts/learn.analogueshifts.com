@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save, UploadCloud, Video, Image as ImageIcon, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CurriculumBuilder, { SectionDraft, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
+import CurriculumBuilder, { SectionDraft, LessonType, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
 import { useUploadThing } from "@/lib/uploadthing";
 
 interface Category {
@@ -17,16 +17,32 @@ interface Category {
 }
 
 export default function CreateCoursePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 lg:p-10 max-w-[1200px] mx-auto flex items-center justify-center py-32 text-gray-400">
+          <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading...
+        </div>
+      }
+    >
+      <CreateCourseForm />
+    </Suspense>
+  );
+}
+
+function CreateCourseForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
   const [activeTab, setActiveTab] = useState("basic");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingCourse, setIsLoadingCourse] = useState(!!editId);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [courseId, setCourseId] = useState<string | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(editId);
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Tab 1: Basic Information
   const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [level, setLevel] = useState("BEGINNER");
   const [description, setDescription] = useState("");
@@ -49,6 +65,54 @@ export default function CreateCoursePage() {
         if (body.success) setCategories(body.data);
       });
   }, []);
+
+  useEffect(() => {
+    if (!editId) return;
+    fetch(`/api/trainer/courses/${editId}`)
+      .then((res) => res.json())
+      .then((body) => {
+        if (!body.success) {
+          toast.error(body.error ?? "Failed to load course");
+          return;
+        }
+        const course = body.data;
+        setTitle(course.title);
+        setCategoryId(course.categoryId ?? "");
+        setLevel(course.level);
+        setDescription(course.description);
+        setThumbnailUrl(course.thumbnailUrl ?? null);
+        setPreviewUrl(course.previewUrl ?? null);
+        setIsPaid(course.price > 0);
+        setPrice(course.price > 0 ? String(course.price) : "");
+
+        if (course.sections?.length) {
+          setSections(
+            course.sections.map((section: any) => ({
+              id: section.id,
+              title: section.title,
+              lessons: section.lessons.map((lesson: any) => ({
+                id: lesson.id,
+                title: lesson.title,
+                type: lesson.type.toLowerCase() as LessonType,
+                duration: lesson.duration ?? "",
+                url: lesson.videoUrl ?? lesson.assignment?.fileUrl ?? "",
+                fileName: undefined,
+                description: lesson.description ?? lesson.assignment?.description ?? "",
+                isExpanded: false,
+                quizPassScore: lesson.quiz?.passScore ?? 80,
+                quizQuestions: (lesson.quiz?.questions ?? []).map((q: any) => ({
+                  id: q.id,
+                  question: q.question,
+                  options: q.options,
+                  correctIndex: q.correctIndex,
+                })),
+              })),
+            }))
+          );
+        }
+      })
+      .finally(() => setIsLoadingCourse(false));
+  }, [editId]);
 
   const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
     onClientUploadComplete: (res) => {
@@ -74,11 +138,10 @@ export default function CreateCoursePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
-        subtitle: subtitle || undefined,
         description,
         categoryId: categoryId || undefined,
         level,
-        price: isPaid ? Math.round(parseFloat(price || "0")) : 0,
+        price: isPaid ? Math.round(parseFloat(price) || 0) : 0,
       }),
     });
     const body = await response.json();
@@ -91,23 +154,32 @@ export default function CreateCoursePage() {
   }
 
   async function syncCourseDetails(id: string) {
-    await fetch(`/api/trainer/courses/${id}`, {
+    const response = await fetch(`/api/trainer/courses/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
-        subtitle: subtitle || undefined,
         description,
         categoryId: categoryId || undefined,
         level,
-        price: isPaid ? Math.round(parseFloat(price || "0")) : 0,
+        price: isPaid ? Math.round(parseFloat(price) || 0) : 0,
         thumbnailUrl: thumbnailUrl || undefined,
         previewUrl: previewUrl || undefined,
       }),
     });
+    const body = await response.json();
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to save course details");
+      return false;
+    }
+    return true;
   }
 
   async function pushCurriculum(id: string) {
+    // Replace the whole curriculum on every save to avoid piling up duplicate
+    // sections/lessons each time a draft (or an existing course) is re-saved.
+    await fetch(`/api/trainer/courses/${id}/sections`, { method: "DELETE" });
+
     for (const section of sections) {
       const sectionRes = await fetch(`/api/trainer/courses/${id}/sections`, {
         method: "POST",
@@ -154,10 +226,12 @@ export default function CreateCoursePage() {
     setIsSaving(true);
     const id = await ensureCourse();
     if (id) {
-      await syncCourseDetails(id);
-      await pushCurriculum(id);
-      setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      toast.success("Draft saved");
+      const saved = await syncCourseDetails(id);
+      if (saved) {
+        await pushCurriculum(id);
+        setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        toast.success("Draft saved");
+      }
     }
     setIsSaving(false);
   };
@@ -173,7 +247,11 @@ export default function CreateCoursePage() {
       setIsSaving(false);
       return;
     }
-    await syncCourseDetails(id);
+    const saved = await syncCourseDetails(id);
+    if (!saved) {
+      setIsSaving(false);
+      return;
+    }
     await pushCurriculum(id);
 
     const response = await fetch(`/api/trainer/courses/${id}/submit-review`, { method: "POST" });
@@ -189,6 +267,14 @@ export default function CreateCoursePage() {
     router.push("/trainer/courses");
   };
 
+  if (isLoadingCourse) {
+    return (
+      <div className="p-6 lg:p-10 max-w-[1200px] mx-auto flex items-center justify-center py-32 text-gray-400">
+        <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading course...
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 lg:p-10 max-w-[1200px] mx-auto space-y-8 pb-32">
 
@@ -198,8 +284,8 @@ export default function CreateCoursePage() {
             <Link href="/trainer/courses"><ArrowLeft className="w-5 h-5" /></Link>
           </Button>
           <div>
-            <div className="text-xs font-bold text-background-darkYellow uppercase tracking-wider mb-0.5">Draft Course</div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Create New Course</h1>
+            <div className="text-xs font-bold text-background-darkYellow uppercase tracking-wider mb-0.5">{editId ? "Edit Course" : "Draft Course"}</div>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">{editId ? "Edit Course" : "Create New Course"}</h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -240,11 +326,6 @@ export default function CreateCoursePage() {
                   <label className="text-sm font-bold text-gray-900">Course Title <span className="text-red-500">*</span></label>
                   <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Complete React Native Bootcamp 2026" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
                   <p className="text-xs text-gray-500">A good title is catchy and describes exactly what the student will learn.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-900">Course Subtitle</label>
-                  <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="e.g. Master mobile app development from scratch" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -321,6 +402,19 @@ export default function CreateCoursePage() {
                       </>
                     )}
                   </label>
+
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs font-bold text-gray-400 uppercase">Or paste a video link</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <input
+                    type="url"
+                    value={previewUrl ?? ""}
+                    onChange={(e) => setPreviewUrl(e.target.value || null)}
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                    className="w-full mt-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-background-darkYellow/20 focus:border-background-darkYellow focus:bg-white transition-all text-gray-900 font-medium"
+                  />
                 </div>
 
                 <hr className="border-gray-100" />

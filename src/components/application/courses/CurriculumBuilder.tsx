@@ -214,6 +214,19 @@ const LessonEditor = ({
               </>
             )}
           </label>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs font-bold text-gray-400 uppercase">Or paste a video link</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+          <input
+            type="url"
+            value={lesson.url}
+            onChange={(e) => updateLesson(lesson.id, 'url', e.target.value)}
+            placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-background-darkYellow outline-none"
+          />
         </div>
       )}
 

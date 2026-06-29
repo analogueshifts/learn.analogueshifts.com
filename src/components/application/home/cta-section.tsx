@@ -19,17 +19,7 @@ export default function CtaSection() {
           <p className="text-lg text-content-grayText mb-8 max-w-lg">
             Join thousands of students who have already transformed their careers through our expertly crafted curriculum. Don&apos;t wait to achieve your goals!
           </p>
-          <Link 
-            href="/"
-            onClick={(e) => {
-              if (window.location.pathname === "/") {
-                e.preventDefault();
-                document.getElementById('featured-courses')?.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                sessionStorage.setItem("scrollTarget", "featured-courses");
-              }
-            }}
-          >
+          <Link href="/courses">
             <Button className="h-14 px-8 text-lg font-bold bg-primary-tan hover:bg-gray-900 text-white rounded-xl shadow-xl hover:scale-105 transition-transform duration-300">
               Start Learning Now
             </Button>

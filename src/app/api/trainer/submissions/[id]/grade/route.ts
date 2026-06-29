@@ -44,6 +44,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     } else {
       console.log(`[dev] Grade email would be sent to ${student.email}: ${parsed.data.grade}`);
     }
+
+    await prisma.notification.create({
+      data: {
+        userId: student.id,
+        type: "SUCCESS",
+        title: "Assignment graded",
+        message: `You scored ${parsed.data.grade} on "${submission.assignment.title}".${parsed.data.feedback ? ` Feedback: ${parsed.data.feedback}` : ""}`,
+      },
+    });
   }
 
   return apiSuccess(updated);

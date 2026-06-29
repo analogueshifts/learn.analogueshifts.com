@@ -1,7 +1,39 @@
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+
+const enrollSchema = z.object({ courseId: z.string() });
+
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return apiError("Not authenticated", 401);
+
+  const parsed = enrollSchema.safeParse(await request.json());
+  if (!parsed.success) return apiError(parsed.error.message, 422);
+
+  const course = await prisma.course.findUnique({ where: { id: parsed.data.courseId } });
+  if (!course || course.status !== "LIVE") return apiError("Course not found", 404);
+  if (course.price > 0) return apiError("This course isn't free. Use checkout to enroll.", 400);
+
+  const existing = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId: session.user.id, courseId: course.id } },
+  });
+  if (existing) return apiSuccess(existing);
+
+  const enrollment = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.create({
+      data: { userId: session.user.id, gateway: "FREE", status: "SUCCESS", totalAmount: 0 },
+    });
+    await tx.orderItem.create({ data: { orderId: order.id, courseId: course.id, price: 0 } });
+    return tx.enrollment.create({
+      data: { userId: session.user.id, courseId: course.id, orderId: order.id },
+    });
+  });
+
+  return apiSuccess(enrollment, 201);
+}
 
 export async function GET() {
   const session = await getServerSession(authOptions);

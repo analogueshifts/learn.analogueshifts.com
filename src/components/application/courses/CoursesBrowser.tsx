@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import CourseFilters from "@/components/application/courses/course-filters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
@@ -10,10 +11,27 @@ import SmartBackButton from "@/components/application/courses/smart-back-button"
 const TRAINER_NAMES = ["Jane Doe", "John Smith", "Alice Wonderland"];
 
 export default function CoursesBrowser({ initialCourses }: { initialCourses: any[] }) {
+  const searchParams = useSearchParams();
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [levelFilter, setLevelFilter] = useState<string[]>([]);
   const [priceFilter, setPriceFilter] = useState<string[]>([]);
-  const [languageFilter, setLanguageFilter] = useState<string[]>([]);
+
+  // Pre-select a category when arriving from a link like /courses?category=devops
+  // (e.g. the home page category grid), once the real category list has loaded.
+  useEffect(() => {
+    const categorySlug = searchParams.get("category");
+    if (!categorySlug) return;
+
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((body) => {
+        if (!body.success) return;
+        const match = body.data.find((c: { slug: string; name: string }) => c.slug === categorySlug);
+        if (match) setCategoryFilter((prev) => (prev.includes(match.name) ? prev : [...prev, match.name]));
+      });
+    // Only run for the URL's initial category param, not on every filter change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Filter courses based on local state
   const filteredCourses = initialCourses.filter((course) => {
@@ -46,15 +64,13 @@ export default function CoursesBrowser({ initialCourses }: { initialCourses: any
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <aside className="w-full lg:w-1/4 xl:w-1/5 shrink-0">
-            <CourseFilters 
+            <CourseFilters
               categoryFilter={categoryFilter}
               setCategoryFilter={setCategoryFilter}
               levelFilter={levelFilter}
               setLevelFilter={setLevelFilter}
               priceFilter={priceFilter}
               setPriceFilter={setPriceFilter}
-              languageFilter={languageFilter}
-              setLanguageFilter={setLanguageFilter}
             />
           </aside>
 
@@ -98,7 +114,7 @@ export default function CoursesBrowser({ initialCourses }: { initialCourses: any
                         </div>
                         
                         <h3 className="font-bold text-lg text-primary-tan line-clamp-2 mb-1.5 group-hover:text-background-darkYellow transition-colors">
-                          {course.headline || course.name}
+                          {course.name}
                         </h3>
                         <p className="text-sm text-gray-500 line-clamp-2 leading-snug mb-4">
                           {course.description}

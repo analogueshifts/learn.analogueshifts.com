@@ -47,6 +47,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       subject: `Your course "${course.title}" was ${decision === "APPROVED" ? "approved" : "reviewed"}`,
       html: `<p>Your course "${course.title}" has been ${decisionText}.</p>${feedback ? `<p>Feedback: ${feedback}</p>` : ""}`,
     });
+
+    await prisma.notification.create({
+      data: {
+        userId: trainer.id,
+        type: decision === "APPROVED" ? "SUCCESS" : decision === "REJECTED" ? "ALERT" : "INFO",
+        title: `Course ${decisionText}`,
+        message: `Your course "${course.title}" has been ${decisionText}.${feedback ? ` Feedback: ${feedback}` : ""}`,
+        actionUrl: `/trainer/courses/new?id=${course.id}`,
+      },
+    });
   }
 
   return apiSuccess(review, 201);

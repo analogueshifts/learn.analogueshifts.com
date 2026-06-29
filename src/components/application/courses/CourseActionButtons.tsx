@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { Loader2, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 interface CourseActionButtonsProps {
@@ -21,6 +23,10 @@ interface CourseActionButtonsProps {
 export default function CourseActionButtons({ course, variant = "floating", isEnrolled = false }: CourseActionButtonsProps) {
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
+  const { data: session } = useSession();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
+  const isFree = course.price === "Free" || course.price === "$0" || course.price === "$0.00";
 
   const cartItem = {
     id: course.id,
@@ -43,6 +49,29 @@ export default function CourseActionButtons({ course, variant = "floating", isEn
     router.push(`/courses/${course.slug}/learn`);
   };
 
+  const handleEnrollFree = async () => {
+    if (!session?.user) {
+      router.push(`/login?callbackUrl=/courses/${course.slug}`);
+      return;
+    }
+    setIsEnrolling(true);
+    const response = await fetch("/api/enrollments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId: course.id }),
+    });
+    const body = await response.json();
+    setIsEnrolling(false);
+
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to enroll");
+      return;
+    }
+
+    toast.success("Enrolled! Let's get started.");
+    router.push(`/courses/${course.slug}/learn`);
+  };
+
   if (isEnrolled) {
     const className =
       variant === "bottom"
@@ -51,6 +80,18 @@ export default function CourseActionButtons({ course, variant = "floating", isEn
     return (
       <Button onClick={handleContinueLearning} className={className}>
         Continue Learning
+      </Button>
+    );
+  }
+
+  if (isFree) {
+    const className =
+      variant === "bottom"
+        ? "h-14 px-8 text-lg font-bold bg-primary-tan hover:bg-gray-900 text-white rounded-xl shadow-xl hover:scale-105 transition-transform duration-300"
+        : "w-full h-14 text-lg font-bold bg-background-darkYellow hover:bg-yellow-600 text-white rounded-xl mb-4";
+    return (
+      <Button onClick={handleEnrollFree} disabled={isEnrolling} className={className}>
+        {isEnrolling ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Enrolling...</> : "Start Learning for Free"}
       </Button>
     );
   }

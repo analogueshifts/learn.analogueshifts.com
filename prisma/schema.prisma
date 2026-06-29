@@ -63,6 +63,10 @@ model User {
   answers               Answer[]
   certificates          Certificate[]
   achievements          UserAchievement[]
+  notifications         Notification[]
+  sentMessages          Message[]               @relation("MessagesSent")
+  receivedMessages      Message[]               @relation("MessagesReceived")
+  messageReads          MessageRead[]
 }
 
 model Account {
@@ -238,6 +242,7 @@ enum PaymentGateway {
   PAYSTACK
   FLUTTERWAVE
   STRIPE
+  FREE
 }
 
 enum OrderStatus {
@@ -457,6 +462,68 @@ model AdminNotification {
   actionUrl String?
   read      Boolean               @default(false)
   createdAt DateTime              @default(now())
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  ALERT
+}
+
+enum MessageAudience {
+  ALL
+  STUDENTS
+  TRAINERS
+  ADMIN
+  INDIVIDUAL
+}
+
+model Message {
+  id        String          @id @default(cuid())
+  subject   String
+  body      String
+  audience  MessageAudience
+  createdAt DateTime        @default(now())
+
+  senderId String
+  sender   User   @relation("MessagesSent", fields: [senderId], references: [id])
+
+  recipientId String?
+  recipient   User?   @relation("MessagesReceived", fields: [recipientId], references: [id])
+
+  reads MessageRead[]
+
+  @@index([audience])
+  @@index([senderId])
+  @@index([recipientId])
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  readAt    DateTime @default(now())
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType @default(INFO)
+  title     String
+  message   String
+  actionUrl String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model PlatformSetting {

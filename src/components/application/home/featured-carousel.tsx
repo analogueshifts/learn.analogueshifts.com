@@ -26,7 +26,7 @@ export default function FeaturedCarousel() {
         const courses = body.data ?? [];
         const items = [...courses, ...courses, ...courses].slice(0, 8).map((c, index) => ({
           id: c.slug,
-          title: c.subtitle || c.title,
+          title: c.title,
           description: c.description,
           instructor: c.trainer?.name ?? "AnalogueShifts",
           price: c.price === 0 ? "Free" : `$${c.price}`,

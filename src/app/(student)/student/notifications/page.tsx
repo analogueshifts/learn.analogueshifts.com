@@ -1,40 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Bell, CheckCircle2, Circle, Clock, MoreVertical, Trash2, ArrowLeft } from "lucide-react"
+import { Bell, CheckCircle2, Circle, Clock, MoreVertical, Trash2, ArrowLeft, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import toast from "react-hot-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 
-const initialNotifications = [
-  { id: 1, title: "Upcoming Live Session", message: "Your Advanced React class starts in 15 minutes. Join the virtual classroom now to get settled before the instructor begins.", time: "Just now", read: false, type: "alert" },
-  { id: 2, title: "Course Material Updated", message: "A new module has been unlocked: 'State Management Patterns'. Log in to review the latest video and quiz materials.", time: "2 hours ago", read: false, type: "info" },
-  { id: 3, title: "Assignment Graded", message: "Instructor Sarah evaluated your Final Project submission. You scored 95%! Check out the feedback left on your document.", time: "Yesterday", read: true, type: "success" },
-  { id: 4, title: "Certificate Earned", message: "Congratulations! You have successfully earned a certificate in Frontend Basics. You can download and share it from your Certificates tab.", time: "3 days ago", read: true, type: "success" },
-  { id: 5, title: "Subscription Renewal", message: "Your pro student subscription will renew automatically in 7 days. Ensure your payment method is up to date.", time: "1 week ago", read: true, type: "info" },
-]
+interface NotificationItem {
+  id: string
+  title: string
+  message: string
+  type: "INFO" | "SUCCESS" | "ALERT"
+  read: boolean
+  createdAt: string
+  actionUrl: string | null
+}
 
 export default function StudentNotificationsPage() {
   const router = useRouter()
-  const [notifications, setNotifications] = useState(initialNotifications)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })))
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((body) => {
+        if (body.success) setNotifications(body.data)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const markAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    const response = await fetch("/api/notifications", { method: "PATCH" })
+    const body = await response.json()
+    if (!body.success) toast.error("Failed to mark notifications as read")
   }
 
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
+  const markAsRead = async (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    const response = await fetch(`/api/notifications/${id}`, { method: "PATCH" })
+    const body = await response.json()
+    if (!body.success) toast.error("Failed to mark notification as read")
   }
 
-  const deleteNotification = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id))
+  const deleteNotification = async (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    const response = await fetch(`/api/notifications/${id}`, { method: "DELETE" })
+    const body = await response.json()
+    if (!body.success) toast.error("Failed to delete notification")
   }
 
   const unreadCount = notifications.filter(n => !n.read).length
@@ -42,9 +64,9 @@ export default function StudentNotificationsPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <Button 
-          variant="ghost" 
-          onClick={() => router.back()} 
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
           className="mb-4 text-muted-foreground hover:text-foreground pl-0 hover:bg-transparent"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -57,9 +79,9 @@ export default function StudentNotificationsPage() {
             Stay updated on your courses, assignments, and account alerts.
           </p>
         </div>
-        
+
         {unreadCount > 0 && (
-          <Button 
+          <Button
             onClick={markAllAsRead}
             variant="outline"
             className="shrink-0 border-border/50 shadow-sm text-sm"
@@ -80,7 +102,11 @@ export default function StudentNotificationsPage() {
           <Bell className="w-5 h-5 text-muted-foreground" />
         </CardHeader>
         <CardContent className="p-0">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground">
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading notifications...
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="bg-muted/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bell className="w-8 h-8 text-muted-foreground/50" />
@@ -91,8 +117,8 @@ export default function StudentNotificationsPage() {
           ) : (
             <div className="divide-y divide-border/50">
               {notifications.map((notif) => (
-                <div 
-                  key={notif.id} 
+                <div
+                  key={notif.id}
                   className={cn(
                     "p-6 transition-colors duration-200 group flex gap-4 items-start",
                     !notif.read ? "bg-muted/10" : "hover:bg-muted/5"
@@ -105,22 +131,22 @@ export default function StudentNotificationsPage() {
                       <CheckCircle2 className="w-4 h-4 text-muted-foreground/50" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-4 mb-1">
                       <h4 className={cn(
-                        "text-base font-semibold truncate", 
+                        "text-base font-semibold truncate",
                         !notif.read ? "text-foreground" : "text-muted-foreground"
                       )}>
                         {notif.title}
                       </h4>
-                      
+
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {notif.time}
+                          {new Date(notif.createdAt).toLocaleDateString()}
                         </span>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
@@ -134,7 +160,7 @@ export default function StudentNotificationsPage() {
                                 Mark as read
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => deleteNotification(notif.id)}
                               className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                             >
@@ -145,7 +171,7 @@ export default function StudentNotificationsPage() {
                         </DropdownMenu>
                       </div>
                     </div>
-                    
+
                     <p className={cn(
                       "text-sm leading-relaxed max-w-3xl",
                       !notif.read ? "text-muted-foreground" : "text-muted-foreground/80"

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter, MoreVertical, Users, Star, DollarSign, Edit3, Eye, Video, Loader2 } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Popover,
@@ -37,15 +38,53 @@ export default function TrainerCoursesPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [courses, setCourses] = useState<TrainerCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadCourses = () => {
+    setIsLoading(true);
     fetch("/api/trainer/courses")
       .then((res) => res.json())
       .then((body) => {
         if (body.success) setCourses(body.data);
       })
       .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    loadCourses();
   }, []);
+
+  const handleDelete = async (course: TrainerCourse) => {
+    if (!window.confirm(`Delete "${course.title}"? This can't be undone.`)) return;
+    setPendingActionId(course.id);
+    const response = await fetch(`/api/trainer/courses/${course.id}`, { method: "DELETE" });
+    const body = await response.json();
+    setPendingActionId(null);
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to delete course");
+      return;
+    }
+    toast.success("Course deleted");
+    setCourses((prev) => prev.filter((c) => c.id !== course.id));
+  };
+
+  const handleToggleStatus = async (course: TrainerCourse) => {
+    const nextStatus = course.status === "LIVE" ? "ARCHIVED" : "LIVE";
+    setPendingActionId(course.id);
+    const response = await fetch(`/api/trainer/courses/${course.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: nextStatus }),
+    });
+    const body = await response.json();
+    setPendingActionId(null);
+    if (!body.success) {
+      toast.error(body.error ?? "Failed to update course");
+      return;
+    }
+    toast.success(nextStatus === "ARCHIVED" ? "Course unpublished" : "Course published");
+    loadCourses();
+  };
 
   const filteredCourses = courses.filter((course) => {
     if (activeTab === "published") return course.status === "LIVE";
@@ -173,7 +212,7 @@ export default function TrainerCoursesPage() {
                 <div className="flex items-center gap-2 lg:border-l border-gray-100 lg:pl-6 shrink-0 mt-4 lg:mt-0 justify-end">
                   {course.status === 'DRAFT' ? (
                     <Button variant="outline" className="bg-white border-2 border-gray-200 text-gray-900 font-bold hover:bg-gray-50" asChild>
-                      <Link href="/trainer/courses/new">
+                      <Link href={`/trainer/courses/new?id=${course.id}`}>
                         Continue Editing
                       </Link>
                     </Button>
@@ -185,7 +224,7 @@ export default function TrainerCoursesPage() {
                         </Link>
                       </Button>
                       <Button variant="outline" size="icon" className="bg-white text-gray-600 hover:text-blue-600 border-gray-200" asChild>
-                        <Link href="/trainer/courses/new">
+                        <Link href={`/trainer/courses/new?id=${course.id}`}>
                           <Edit3 className="w-4 h-4" />
                         </Link>
                       </Button>
@@ -194,17 +233,27 @@ export default function TrainerCoursesPage() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-900">
-                        <MoreVertical className="w-5 h-5" />
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-900" disabled={pendingActionId === course.id}>
+                        {pendingActionId === course.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <MoreVertical className="w-5 h-5" />}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-48 p-2 rounded-xl border border-gray-100 shadow-xl">
                       <div className="flex flex-col space-y-1">
-                        <Button variant="ghost" className="justify-start w-full font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900">
-                          {course.status === 'LIVE' ? 'Unpublish' : 'View Settings'}
-                        </Button>
+                        {(course.status === 'LIVE' || course.status === 'ARCHIVED') && (
+                          <Button
+                            variant="ghost"
+                            className="justify-start w-full font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                            onClick={() => handleToggleStatus(course)}
+                          >
+                            {course.status === 'LIVE' ? 'Unpublish' : 'Republish'}
+                          </Button>
+                        )}
                         <div className="h-px bg-gray-100 my-1 mx-2" />
-                        <Button variant="ghost" className="justify-start w-full font-bold text-red-600 hover:bg-red-50 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          className="justify-start w-full font-bold text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleDelete(course)}
+                        >
                           Delete Course
                         </Button>
                       </div>

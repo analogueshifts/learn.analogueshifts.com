@@ -27,7 +27,7 @@ export default async function CourseDetailPage({
     where: { slug: params.slug },
     include: {
       category: true,
-      trainer: { select: { id: true, name: true, avatar: true, bio: true } },
+      trainer: { select: { id: true, name: true, avatar: true, bio: true, jobTitle: true } },
       sections: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
       reviews: { orderBy: { createdAt: "desc" } },
     },
@@ -45,7 +45,24 @@ export default async function CourseDetailPage({
     : null;
   const isEnrolled = !!enrollment;
 
+  const trainerId = dbCourse.trainer?.id;
+  const [trainerCourseCount, trainerStudentCount, trainerRatingAgg] = trainerId
+    ? await Promise.all([
+        prisma.course.count({ where: { trainerId, status: "LIVE" } }),
+        prisma.enrollment.count({ where: { course: { trainerId } } }),
+        prisma.review.aggregate({ where: { course: { trainerId } }, _avg: { rating: true } }),
+      ])
+    : [0, 0, { _avg: { rating: null } }];
+
+  const trainerStats = {
+    courseCount: trainerCourseCount,
+    studentCount: trainerStudentCount,
+    avgRating: trainerRatingAgg._avg.rating ?? 0,
+  };
+
   const course = mapApiCourseToLegacy(dbCourse);
+  const instructorAvatar =
+    course.instructor?.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(course.instructor?.name || course.name)}`;
 
   const isPreview = searchParams.mode === 'preview';
 
@@ -89,7 +106,7 @@ export default async function CourseDetailPage({
             </div>
             
             <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              {course.headline || course.name}
+              {course.name}
             </h1>
             
             <p className="text-lg text-gray-300 mb-8 max-w-3xl">
@@ -118,17 +135,17 @@ export default async function CourseDetailPage({
 
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-800 border-2 border-background-darkYellow">
-                <Image 
-                  src={course.instructor?.image || "/courses/devops-instructor.svg"} 
-                  alt="Instructor" 
-                  width={48} 
-                  height={48} 
-                  className="object-cover"
+                <img
+                  src={instructorAvatar}
+                  alt={course.instructor?.name || "Instructor"}
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div>
                 <p className="text-sm text-gray-400">Created by</p>
-                <p className="font-medium text-white">Expert Instructor</p>
+                <p className="font-medium text-white">{course.instructor?.name || "Expert Instructor"}</p>
               </div>
             </div>
           </div>
@@ -150,7 +167,7 @@ export default async function CourseDetailPage({
                 <CardContent className="p-8">
                   <div className="mb-6">
                     <div className="text-4xl font-bold text-primary-tan">{course.price}</div>
-                    {!isPreview && <CountdownTimer hours={48} />}
+                    {!isPreview && course.price !== "Free" && <CountdownTimer hours={48} />}
                   </div>
                   
                   {isPreview ? (
@@ -261,40 +278,34 @@ export default async function CourseDetailPage({
                 <h3 className="text-2xl font-bold text-gray-900 mb-8">Your Instructor</h3>
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 shrink-0 border-4 border-white shadow-xl">
-                    <img src={course.instructor?.image || "/courses/devops-instructor.svg"} alt="Instructor" className="w-full h-full object-cover" />
+                    <img src={instructorAvatar} alt={course.instructor?.name || "Instructor"} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1">
                     <h4 className="text-2xl font-bold text-primary-tan mb-1">
                       {course.instructor?.name || "Expert Instructor"}
                     </h4>
                     <p className="text-sm text-background-darkYellow font-bold tracking-wider mb-4">
-                      Senior Engineer & Tech Lead
+                      {dbCourse.trainer?.jobTitle || "Instructor"}
                     </p>
-                    
+
                     <div className="flex flex-wrap gap-6 text-sm text-gray-600 font-medium mb-6">
                       <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-background-darkYellow fill-current" /> 
-                        <span>4.8 Instructor Rating</span>
+                        <Star className="w-4 h-4 text-background-darkYellow fill-current" />
+                        <span>{trainerStats.avgRating > 0 ? trainerStats.avgRating.toFixed(1) : "New"} Instructor Rating</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" /> 
-                        <span>15,200+ Students</span>
+                        <Users className="w-4 h-4 text-gray-400" />
+                        <span>{trainerStats.studentCount.toLocaleString()} Students</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <PlayCircle className="w-4 h-4 text-gray-400" /> 
-                        <span>12 Courses</span>
+                        <PlayCircle className="w-4 h-4 text-gray-400" />
+                        <span>{trainerStats.courseCount} {trainerStats.courseCount === 1 ? "Course" : "Courses"}</span>
                       </div>
                     </div>
-                    
+
                     <div className="text-gray-700 text-[15px] leading-relaxed space-y-4">
                       <p>
-                        {course.instructor?.about || "I am a passionate software engineer with over a decade of experience building highly scalable applications for Fortune 500 companies."}
-                      </p>
-                      <p>
-                        Throughout my career, I've had the privilege of working with cutting-edge technologies and leading engineering teams to deliver products used by millions of users worldwide. My mission now is to take all the hard-earned lessons from the tech industry and condense them into actionable, easy-to-understand curriculum.
-                      </p>
-                      <p>
-                        When I'm not coding or recording lectures, you can find me contributing to open-source projects, writing technical articles, or mentoring junior developers to help them break into the industry.
+                        {course.instructor?.about || "This instructor hasn't added a bio yet."}
                       </p>
                     </div>
                   </div>
