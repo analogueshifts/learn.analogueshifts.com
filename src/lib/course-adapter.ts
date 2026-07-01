@@ -36,6 +36,7 @@ export function mapApiCourseToLegacy(course: any) {
       lessons: (section.lessons ?? []).map((lesson: any) => ({
         title: lesson.title,
         type: mapLessonType(lesson.type),
+        url: lesson.videoUrl ?? undefined,
         duration: lesson.duration ?? undefined,
         description: lesson.description ?? undefined,
         questions: lesson.content?.questions,

@@ -18,7 +18,8 @@ import {
   PlayCircle,
   MessageSquare,
   FileText,
-  Trophy
+  Trophy,
+  ShoppingBag
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -42,6 +43,7 @@ const navigation = [
   { name: "Assignments", href: "/student/assignments", icon: FileText },
   { name: "Achievements", href: "/student/achievements", icon: Trophy },
   { name: "Messages", href: "/student/messages", icon: MessageSquare },
+  { name: "Orders & Refunds", href: "/student/orders", icon: ShoppingBag },
   { name: "Certificates", href: "/student/certificates", icon: Award },
 ]
 

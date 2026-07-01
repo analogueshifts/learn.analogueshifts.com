@@ -334,11 +334,14 @@ model Coupon {
 }
 
 model Refund {
-  id          String       @id @default(cuid())
-  reason      String
-  status      RefundStatus @default(PENDING)
-  requestedAt DateTime     @default(now())
-  processedAt DateTime?
+  id            String       @id @default(cuid())
+  reason        String
+  status        RefundStatus @default(PENDING)
+  requestedAt   DateTime     @default(now())
+  processedAt   DateTime?
+  bankName      String?
+  accountName   String?
+  accountNumber String?
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id])
@@ -565,13 +568,16 @@ enum PayoutStatus {
 }
 
 model Payout {
-  id          String       @id @default(cuid())
-  amount      Int
-  method      PayoutMethod
-  period      String
-  status      PayoutStatus @default(PENDING)
-  processedAt DateTime?
-  createdAt   DateTime     @default(now())
+  id            String       @id @default(cuid())
+  amount        Int
+  method        PayoutMethod
+  period        String
+  status        PayoutStatus @default(PENDING)
+  processedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  bankName      String?
+  accountName   String?
+  accountNumber String?
 
   trainerId String
   trainer   User   @relation(fields: [trainerId], references: [id])

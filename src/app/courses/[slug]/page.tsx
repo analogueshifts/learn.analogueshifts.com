@@ -68,15 +68,11 @@ export default async function CourseDetailPage({
 
 
 
-  // Extract the Course Introduction video from Section 1, Lesson 1
-  const firstModule = course.contents?.[0];
-  const firstLessonItem = firstModule?.lessons?.[0];
-  const firstLesson = typeof firstLessonItem === 'string' 
-    ? { url: "https://files.vidstack.io/sprite-fight/720p.mp4", title: firstLessonItem }
-    : firstLessonItem;
-
-  const previewVideoUrl = firstLesson?.url || "https://files.vidstack.io/sprite-fight/720p.mp4";
-  const previewVideoTitle = firstLesson?.title || `${course.name} Preview`;
+  // Use the dedicated course preview URL first, then fall back to first lesson video
+  const firstLesson = course.contents?.[0]?.lessons?.[0];
+  const firstLessonUrl = typeof firstLesson === 'string' ? undefined : firstLesson?.url;
+  const previewVideoUrl = course.preview || firstLessonUrl || "https://files.vidstack.io/sprite-fight/720p.mp4";
+  const previewVideoTitle = (typeof firstLesson !== 'string' && firstLesson?.title) || `${course.name} Preview`;
 
   return (
     <GuestLayout>

@@ -20,6 +20,8 @@ import {
   Megaphone,
   Target,
   Ticket,
+  Briefcase,
+  UserCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,8 +41,9 @@ import Image from "next/image"
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Students", href: "/admin/students", icon: GraduationCap },
+  { name: "Instructors", href: "/admin/trainers", icon: Briefcase },
   { name: "Courses", href: "/admin/courses", icon: BookOpen },
-  { name: "Trainers", href: "/admin/trainers", icon: GraduationCap },
   { name: "Coupons", href: "/admin/coupons", icon: Ticket },
   { name: "Broadcasts", href: "/admin/messages", icon: Megaphone },
   { name: "Marketing", href: "/admin/marketing", icon: Target },

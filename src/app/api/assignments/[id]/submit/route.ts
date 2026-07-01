@@ -4,10 +4,11 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 
-const submitSchema = z.object({
-  fileUrl: z.string().url(),
-  fileName: z.string().optional(),
-});
+const submitSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("code"), gitUrl: z.string().url("Must be a valid git URL") }),
+  z.object({ type: z.literal("text"), textContent: z.string().min(10, "Submission too short").max(10000) }),
+  z.object({ type: z.literal("image"), imageUrl: z.string().url("Must be a valid Cloudinary URL") }),
+]);
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -28,12 +29,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = submitSchema.safeParse(await request.json());
   if (!parsed.success) return apiError(parsed.error.message, 422);
 
-  // Resubmitting before grading just overwrites the file; once graded, grade/feedback reset
-  // since a new file means the trainer needs to look at it again.
+  let fileUrl: string;
+  let fileName: string;
+
+  if (parsed.data.type === "code") {
+    fileUrl = parsed.data.gitUrl;
+    fileName = "code";
+  } else if (parsed.data.type === "text") {
+    fileUrl = parsed.data.textContent;
+    fileName = "text";
+  } else {
+    fileUrl = parsed.data.imageUrl;
+    fileName = "image";
+  }
+
   const submission = await prisma.assignmentSubmission.upsert({
     where: { assignmentId_studentId: { assignmentId: id, studentId: session.user.id } },
-    create: { assignmentId: id, studentId: session.user.id, ...parsed.data },
-    update: { ...parsed.data, grade: null, feedback: null, gradedAt: null, submittedAt: new Date() },
+    create: { assignmentId: id, studentId: session.user.id, fileUrl, fileName },
+    update: { fileUrl, fileName, grade: null, feedback: null, gradedAt: null, submittedAt: new Date() },
   });
 
   return apiSuccess(submission, 201);

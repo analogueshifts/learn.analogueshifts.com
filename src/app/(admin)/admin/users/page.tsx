@@ -220,13 +220,35 @@ export default function UsersPage() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
 
-                {user.role !== "ADMIN" && (
+                {user.role === "STUDENT" && (
                   <>
                     <DropdownMenuItem onClick={() => handleRoleChange(user.id, "TRAINER")}>
                       <GraduationCap className="mr-2 h-4 w-4" /> Promote to Trainer
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleRoleChange(user.id, "ADMIN")}>
                       <Shield className="mr-2 h-4 w-4" /> Make Admin
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {user.role === "TRAINER" && (
+                  <>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "STUDENT")}>
+                      <GraduationCap className="mr-2 h-4 w-4" /> Demote to Student
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "ADMIN")}>
+                      <Shield className="mr-2 h-4 w-4" /> Make Admin
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {user.role === "ADMIN" && (
+                  <>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "TRAINER")}>
+                      <GraduationCap className="mr-2 h-4 w-4" /> Demote to Trainer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleRoleChange(user.id, "STUDENT")}>
+                      <GraduationCap className="mr-2 h-4 w-4" /> Demote to Student
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>

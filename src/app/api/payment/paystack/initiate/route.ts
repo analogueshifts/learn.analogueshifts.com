@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       userId: session.user.id,
       gateway: "PAYSTACK",
       totalAmount: priced.total,
-      currency: "USD",
+      currency: "NGN",
       couponId: priced.coupon?.id,
       items: {
         create: priced.courses.map((course) => ({ courseId: course.id, price: course.price })),

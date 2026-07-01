@@ -11,6 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CurriculumBuilder, { SectionDraft, LessonType, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
 import { useUploadThing } from "@/lib/uploadthing";
 
+async function uploadToCloudinaryClient(file: File, folder: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  const body = await res.json();
+  if (!body.success) throw new Error(body.error ?? "Upload failed");
+  return body.data.url;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -114,16 +124,25 @@ function CreateCourseForm() {
       .finally(() => setIsLoadingCourse(false));
   }, [editId]);
 
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
   const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
     onClientUploadComplete: (res) => {
       if (res?.[0]) setPreviewUrl(res[0].serverData.videoUrl);
     },
   });
-  const { startUpload: startThumbnailUpload, isUploading: isUploadingThumbnail } = useUploadThing("courseThumbnailUploader", {
-    onClientUploadComplete: (res) => {
-      if (res?.[0]) setThumbnailUrl(res[0].serverData.url);
-    },
-  });
+
+  const handleThumbnailFile = async (file: File) => {
+    setIsUploadingThumbnail(true);
+    try {
+      const url = await uploadToCloudinaryClient(file, "thumbnail");
+      setThumbnailUrl(url);
+    } catch {
+      toast.error("Thumbnail upload failed. Check your Cloudinary configuration.");
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
 
   async function ensureCourse() {
     if (courseId) return courseId;
@@ -423,7 +442,7 @@ function CreateCourseForm() {
                   <h3 className="text-lg font-bold text-gray-900 mb-2">Course Thumbnail Image</h3>
                   <p className="text-sm text-gray-500 mb-4">This image will represent your course on the marketplace. Use a 16:9 aspect ratio.</p>
 
-                  <input type="file" id="thumbnail-input" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && startThumbnailUpload([e.target.files[0]])} />
+                  <input type="file" id="thumbnail-input" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleThumbnailFile(e.target.files[0])} />
 
                   <div className="flex flex-col sm:flex-row gap-6 items-start">
                     <div className="w-full sm:w-64 h-36 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">

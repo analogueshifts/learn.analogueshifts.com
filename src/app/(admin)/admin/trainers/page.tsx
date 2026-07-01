@@ -58,7 +58,7 @@ export default function InstructorDirectory() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  const applications = trainers.filter((t) => !t.trainerProfile || t.trainerProfile.applicationStatus === "PENDING")
+  const applications = trainers.filter((t) => t.trainerProfile?.applicationStatus === "PENDING")
   const activeTrainers = trainers.filter((t) => t.trainerProfile?.applicationStatus === "APPROVED")
 
   const handleApplicationDecision = async (id: string, applicationStatus: "APPROVED" | "REJECTED") => {
