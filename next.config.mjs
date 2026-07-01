@@ -4,7 +4,9 @@ const nextConfig = {
     // pdfkit reads its AFM font files from disk by relative path at runtime;
     // webpack bundling breaks that lookup unless the package is left external.
     serverComponentsExternalPackages: ["pdfkit"],
+    
   },
+  transpilePackages: ['@tryhaya/analytics'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'i.pravatar.cc' },

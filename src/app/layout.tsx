@@ -7,6 +7,7 @@ import { ToastProvider } from "@/contexts/toast";
 import ToastMessage from "@/components/application/toast";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { HayaProvider } from "@/components/HayaProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700"],
@@ -66,6 +67,7 @@ export default function RootLayout({
           <UserProvider>
             <ToastProvider>
               <ToastMessage />
+              <HayaProvider />
               <NuqsAdapter>{children}</NuqsAdapter>
             </ToastProvider>
           </UserProvider>
