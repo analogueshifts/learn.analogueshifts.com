@@ -2,6 +2,7 @@ import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { validateCurriculumContent } from "@/lib/course-validation";
 
 const updateSchema = z.object({
   status: z.enum(["DRAFT", "PENDING", "LIVE", "ARCHIVED"]).optional(),
@@ -18,6 +19,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const parsed = updateSchema.safeParse(await request.json());
   if (!parsed.success) return apiError(parsed.error.message, 422);
+
+  if (parsed.data.status === "LIVE") {
+    const sections = await prisma.section.findMany({
+      where: { courseId: id },
+      include: { lessons: { include: { quiz: { include: { questions: true } }, assignment: true } } },
+    });
+    const validationError = validateCurriculumContent(
+      sections.map((section) => ({
+        lessons: section.lessons.map((lesson) => ({
+          title: lesson.title,
+          type: lesson.type,
+          videoUrl: lesson.videoUrl,
+          description: lesson.description,
+          quiz: lesson.quiz
+            ? { questions: lesson.quiz.questions.map((q) => ({ question: q.question, options: q.options })) }
+            : null,
+          assignment: lesson.assignment
+            ? { description: lesson.assignment.description, fileUrl: lesson.assignment.fileUrl }
+            : null,
+        })),
+      }))
+    );
+    if (validationError) return apiError(validationError, 400);
+  }
 
   const updated = await prisma.course.update({ where: { id }, data: parsed.data });
   return apiSuccess(updated);

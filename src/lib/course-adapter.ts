@@ -29,7 +29,6 @@ export function mapApiCourseToLegacy(course: any) {
       ? { name: course.trainer.name, image: course.trainer.avatar, about: course.trainer.bio }
       : undefined,
     whatToExpect: undefined as { summary: string; list: string[] } | undefined,
-    review: course.reviews?.[0]?.body,
     contents: (course.sections ?? []).map((section: any) => ({
       id: section.id,
       title: section.title,

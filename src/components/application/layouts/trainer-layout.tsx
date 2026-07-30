@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AccountStatusBanner from "@/components/application/account-status-banner";
 
 const navItems = [
   { name: "Dashboard", href: "/trainer/dashboard", icon: LayoutDashboard },
@@ -152,6 +153,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
+        <AccountStatusBanner />
         {/* Premium Top Navigation Header */}
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 shadow-sm">
           <button 

@@ -67,16 +67,23 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user }) {
+      if (!user?.email) return true;
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { status: true } });
+      if (dbUser && dbUser.status !== "ACTIVE") return false;
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        return token;
       }
 
       if (token.id) {
         const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
-        if (dbUser) token.role = dbUser.role;
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.status = dbUser.status;
+        }
       }
 
       return token;
@@ -85,6 +92,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.status = token.status;
       }
       return session;
     },

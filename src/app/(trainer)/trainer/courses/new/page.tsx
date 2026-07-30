@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CurriculumBuilder, { SectionDraft, LessonType, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
 import { useUploadThing } from "@/lib/uploadthing";
+import { validateCurriculumContent } from "@/lib/course-validation";
 
 async function uploadToCloudinaryClient(file: File, folder: string): Promise<string> {
   const formData = new FormData();
@@ -260,6 +261,30 @@ function CreateCourseForm() {
   };
 
   const handleSubmit = async () => {
+    const validationError = validateCurriculumContent(
+      sections.map((section) => ({
+        lessons: section.lessons.map((lesson) => ({
+          title: lesson.title,
+          type: lesson.type.toUpperCase() as "VIDEO" | "ARTICLE" | "QUIZ" | "ASSIGNMENT",
+          videoUrl: lesson.type === "video" ? lesson.url : undefined,
+          description: lesson.type === "article" ? lesson.description : undefined,
+          quiz:
+            lesson.type === "quiz"
+              ? { questions: lesson.quizQuestions.map((q) => ({ question: q.question, options: q.options })) }
+              : undefined,
+          assignment:
+            lesson.type === "assignment"
+              ? { description: lesson.description, fileUrl: lesson.url }
+              : undefined,
+        })),
+      }))
+    );
+    if (validationError) {
+      toast.error(validationError);
+      setActiveTab("curriculum");
+      return;
+    }
+
     setIsSaving(true);
     const id = await ensureCourse();
     if (!id) {

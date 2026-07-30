@@ -10,7 +10,7 @@ import {
   getFilteredRowModel,
   ColumnFiltersState,
 } from "@tanstack/react-table"
-import { MoreHorizontal, Search, Star, Users, CheckCircle, Clock, Archive, PenTool, Loader2, Trash2 } from "lucide-react"
+import { MoreHorizontal, Search, Star, Users, CheckCircle, Clock, Archive, PenTool, Loader2, Trash2, Image as ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ import { CSVLink } from "react-csv"
 export type Course = {
   id: string
   title: string
+  thumbnailUrl: string | null
   trainer: { name: string }
   price: number
   status: "LIVE" | "PENDING" | "DRAFT" | "ARCHIVED"
@@ -91,11 +92,23 @@ export default function CoursesPage() {
     {
       accessorKey: "title",
       header: "Course Name",
-      cell: ({ row }) => (
-        <div className="font-semibold text-foreground max-w-[250px] truncate" title={row.getValue("title")}>
-          {row.getValue("title")}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const thumbnailUrl = row.original.thumbnailUrl
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-8 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center border border-border/50">
+              {thumbnailUrl ? (
+                <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon className="w-4 h-4 text-muted-foreground/50" />
+              )}
+            </div>
+            <div className="font-semibold text-foreground max-w-[200px] truncate" title={row.getValue("title")}>
+              {row.getValue("title")}
+            </div>
+          </div>
+        )
+      },
     },
     {
       id: "trainer",

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,8 +28,17 @@ const loginSchema = z.object({
 });
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -38,21 +48,35 @@ export default function LoginPage() {
     },
   });
 
+  useEffect(() => {
+    if (searchParams.get("error") === "banned") {
+      form.setError("root", {
+        message: "Your account has been suspended or banned. Contact support if you believe this is a mistake.",
+      });
+    }
+  }, [searchParams, form]);
+
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    
+
     const result = await signIn("credentials", {
       email: values.email,
       password: values.password,
       redirect: false,
     });
-    
+
     if (result?.error) {
-      form.setError("root", { message: "Invalid email or password" });
+      if (result.error === "AccessDenied") {
+        form.setError("root", {
+          message: "Your account has been suspended or banned. Contact support if you believe this is a mistake.",
+        });
+      } else {
+        form.setError("root", { message: "Invalid email or password" });
+      }
     } else {
       window.location.href = "/";
     }
-    
+
     setIsLoading(false);
   }
 

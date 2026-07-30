@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import AccountStatusBanner from "@/components/application/account-status-banner"
 
 import NavLogo from "@/assets/images/nav-logo.svg"
 import Image from "next/image"
@@ -138,6 +139,7 @@ export default function StudentLayout({
 
       {/* Main content area */}
       <main className="flex-1 pl-64 flex flex-col min-h-screen">
+        <AccountStatusBanner />
         {/* Top Navigation Header */}
         <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 shadow-sm">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">

@@ -29,13 +29,24 @@ export default async function CourseDetailPage({
       category: true,
       trainer: { select: { id: true, name: true, avatar: true, bio: true, jobTitle: true } },
       sections: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
-      reviews: { orderBy: { createdAt: "desc" } },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        include: { student: { select: { name: true, avatar: true } } },
+      },
     },
   });
 
   if (!dbCourse || dbCourse.status !== "LIVE") {
     notFound();
   }
+
+  const reviews = dbCourse.reviews;
+  const reviewCount = reviews.length;
+  const avgRating = reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0;
+  const ratingDistribution = [5, 4, 3, 2, 1].map((stars) => {
+    const count = reviews.filter((r) => r.rating === stars).length;
+    return { stars, pct: reviewCount > 0 ? Math.round((count / reviewCount) * 100) : 0 };
+  });
 
   const session = await getServerSession(authOptions);
   const enrollment = session?.user?.id
@@ -111,13 +122,13 @@ export default async function CourseDetailPage({
             
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-300 mb-8">
               <div className="flex items-center gap-2">
-                <span className="text-background-darkYellow font-bold">4.8</span>
+                <span className="text-background-darkYellow font-bold">{reviewCount > 0 ? avgRating.toFixed(1) : "New"}</span>
                 <div className="flex text-background-darkYellow">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
+                    <Star key={i} className={`h-4 w-4 fill-current ${i < Math.round(avgRating) ? "" : "text-gray-500"}`} />
                   ))}
                 </div>
-                <span className="text-gray-400 ml-1">(2,451 ratings)</span>
+                <span className="text-gray-400 ml-1">({reviewCount} {reviewCount === 1 ? "rating" : "ratings"})</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -313,23 +324,17 @@ export default async function CourseDetailPage({
                 
                 <div className="flex flex-col md:flex-row gap-12 mb-12 items-center">
                   <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-2xl border border-gray-100 shrink-0 w-full md:w-64">
-                    <span className="text-6xl font-bold text-primary-tan mb-2">4.8</span>
+                    <span className="text-6xl font-bold text-primary-tan mb-2">{reviewCount > 0 ? avgRating.toFixed(1) : "—"}</span>
                     <div className="flex text-background-darkYellow mb-2">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-6 w-6 fill-current" />
+                        <Star key={i} className={`h-6 w-6 fill-current ${i < Math.round(avgRating) ? "" : "text-gray-300"}`} />
                       ))}
                     </div>
                     <span className="text-sm text-gray-500 font-medium">Course Rating</span>
                   </div>
-                  
+
                   <div className="flex-1 w-full space-y-3">
-                    {[
-                      { stars: 5, pct: 75 },
-                      { stars: 4, pct: 18 },
-                      { stars: 3, pct: 5 },
-                      { stars: 2, pct: 1 },
-                      { stars: 1, pct: 1 },
-                    ].map((stat) => (
+                    {ratingDistribution.map((stat) => (
                       <div key={stat.stars} className="flex items-center gap-4">
                         <div className="flex items-center gap-2 w-24 shrink-0">
                           <span className="text-sm font-medium text-gray-600">{stat.stars} stars</span>
@@ -344,48 +349,48 @@ export default async function CourseDetailPage({
                     ))}
                   </div>
                 </div>
-                
-                <div className="space-y-8">
-                  {/* First Review */}
-                  <div className="border-b border-gray-100 pb-8">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold text-gray-500">
-                        JD
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-primary-tan">John Doe</h5>
-                        <div className="flex text-background-darkYellow">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-current" />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-content-grayText leading-relaxed">
-                      {course.review || "This course was absolutely amazing! I learned so much and the instructor was fantastic."}
-                    </p>
-                  </div>
 
-                  {/* Second Review */}
-                  <div className="border-b border-gray-100 pb-8">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-background-darkYellow/10 rounded-full flex items-center justify-center text-lg font-bold text-background-darkYellow">
-                        SA
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-primary-tan">Sarah Adams</h5>
-                        <div className="flex text-background-darkYellow">
-                          {[...Array(4)].map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-current" />
-                          ))}
-                          <Star className="h-3 w-3 text-gray-300 fill-current" />
-                        </div>
-                      </div>
+                <div className="space-y-8">
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400">
+                      <p className="font-medium">No reviews yet.</p>
+                      <p className="text-sm mt-1">Be the first student to review this course after completing it.</p>
                     </div>
-                    <p className="text-content-grayText leading-relaxed">
-                      "I've taken a lot of online courses, but the curriculum here is structured perfectly. The hands-on projects helped me land my first tech job within 3 months of completing it. Highly recommend to anyone serious about their career!"
-                    </p>
-                  </div>
+                  ) : (
+                    reviews.map((review) => {
+                      const initials = review.student.name
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+                      return (
+                        <div key={review.id} className="border-b border-gray-100 pb-8 last:border-0">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold text-gray-500 overflow-hidden shrink-0">
+                              {review.student.avatar ? (
+                                <img src={review.student.avatar} alt={review.student.name} className="w-full h-full object-cover" />
+                              ) : (
+                                initials
+                              )}
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-primary-tan">{review.student.name}</h5>
+                              <div className="flex text-background-darkYellow">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`h-3 w-3 fill-current ${i < review.rating ? "" : "text-gray-300"}`} />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {review.body && (
+                            <p className="text-content-grayText leading-relaxed">{review.body}</p>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

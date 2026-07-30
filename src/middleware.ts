@@ -7,6 +7,14 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    if (
+      (path.startsWith("/student") || path.startsWith("/trainer")) &&
+      token?.status &&
+      token.status !== "ACTIVE"
+    ) {
+      return NextResponse.redirect(new URL("/login?error=banned", req.url));
+    }
+
     if (path.startsWith("/trainer") && token?.role !== "TRAINER" && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
@@ -25,5 +33,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/trainer/:path*", "/admin/:path*"],
+  matcher: ["/student/:path*", "/trainer/:path*", "/admin/:path*"],
 };
