@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import CourseEditorForm from "@/components/application/courses/CourseEditorForm";
 
-export default function CreateCoursePage() {
+export default function AdminCreateCoursePage() {
   return (
     <Suspense
       fallback={
@@ -13,7 +13,7 @@ export default function CreateCoursePage() {
         </div>
       }
     >
-      <CourseEditorForm basePath="/trainer" />
+      <CourseEditorForm basePath="/admin" showTrainerPicker />
     </Suspense>
   );
 }

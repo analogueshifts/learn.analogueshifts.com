@@ -50,6 +50,8 @@ const createCourseSchema = z.object({
   categoryId: z.string().optional(),
   level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]).optional(),
   price: z.number().int().min(0).optional(),
+  // Admin-only: attribute the course to a different trainer instead of the caller.
+  trainerId: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -59,7 +61,16 @@ export async function POST(request: Request) {
   const parsed = createCourseSchema.safeParse(await request.json());
   if (!parsed.success) return apiError(parsed.error.message, 422);
 
-  const { title, subtitle, description, categoryId, level, price } = parsed.data;
+  const { title, subtitle, description, categoryId, level, price, trainerId } = parsed.data;
+
+  let resolvedTrainerId = trainer.id;
+  if (trainer.role === "ADMIN" && trainerId) {
+    const targetTrainer = await prisma.user.findUnique({ where: { id: trainerId }, select: { id: true, role: true } });
+    if (!targetTrainer || targetTrainer.role !== "TRAINER") {
+      return apiError("Selected trainer not found", 400);
+    }
+    resolvedTrainerId = targetTrainer.id;
+  }
 
   let slug = slugify(title);
   const existing = await prisma.course.findUnique({ where: { slug } });
@@ -74,7 +85,7 @@ export async function POST(request: Request) {
       categoryId,
       level,
       price: price ?? 0,
-      trainerId: trainer.id,
+      trainerId: resolvedTrainerId,
     },
   });
 

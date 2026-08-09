@@ -180,6 +180,12 @@ export default function CoursesPage() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>Course Actions</DropdownMenuLabel>
 
+                <DropdownMenuItem asChild>
+                  <Link href={`/admin/courses/new?id=${course.id}`} className="cursor-pointer text-[#0F2942]">
+                    <PenTool className="mr-2 h-4 w-4" /> Edit Course
+                  </Link>
+                </DropdownMenuItem>
+
                 {course.status === "PENDING" && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin/courses/review" className="cursor-pointer text-[#0F2942]">
@@ -246,6 +252,9 @@ export default function CoursesPage() {
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" className="shadow-sm border-[#0F2942]/20 text-[#0F2942] hover:bg-[#0F2942]/5 dark:border-border dark:text-foreground dark:hover:bg-muted/50">
             <Link href="/admin/courses/review">Review Queue <Badge className="ml-2 bg-[#FFBB0A] text-[#0F2942]">{pendingCount}</Badge></Link>
+          </Button>
+          <Button asChild className="shadow-sm bg-[#FFBB0A] text-[#0F2942] hover:bg-[#FFBB0A]/90 font-bold">
+            <Link href="/admin/courses/new">+ Add Course</Link>
           </Button>
         </div>
       </div>
