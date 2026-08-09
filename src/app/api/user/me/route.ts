@@ -31,6 +31,7 @@ const updateProfileSchema = z.object({
   linkedin: z.string().url().optional(),
   twitter: z.string().url().optional(),
   github: z.string().url().optional(),
+  avatar: z.string().url().optional(),
 });
 
 export async function PATCH(request: Request) {

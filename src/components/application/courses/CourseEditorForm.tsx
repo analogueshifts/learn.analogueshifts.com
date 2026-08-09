@@ -10,18 +10,8 @@ import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CurriculumBuilder, { SectionDraft, LessonType, createEmptySections } from "@/components/application/courses/CurriculumBuilder";
-import { useUploadThing } from "@/lib/uploadthing";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary-client";
 import { validateCurriculumContent } from "@/lib/course-validation";
-
-async function uploadToCloudinaryClient(file: File, folder: string): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("folder", folder);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  const body = await res.json();
-  if (!body.success) throw new Error(body.error ?? "Upload failed");
-  return body.data.url;
-}
 
 interface Category {
   id: string;
@@ -140,12 +130,19 @@ export default function CourseEditorForm({
   }, [editId]);
 
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
-  const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
-    onClientUploadComplete: (res) => {
-      if (res?.[0]) setPreviewUrl(res[0].serverData.videoUrl);
-    },
-  });
+  const handleIntroVideoFile = async (file: File) => {
+    setIsUploadingVideo(true);
+    try {
+      const url = await uploadToCloudinaryClient(file, "video");
+      setPreviewUrl(url);
+    } catch {
+      toast.error("Video upload failed. Check your Cloudinary configuration.");
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
 
   const handleThumbnailFile = async (file: File) => {
     setIsUploadingThumbnail(true);
@@ -263,6 +260,10 @@ export default function CourseEditorForm({
   }
 
   const handleSaveDraft = async () => {
+    if (isUploadingThumbnail || isUploadingVideo) {
+      toast.error("Please wait for the upload to finish before saving.");
+      return;
+    }
     setIsSaving(true);
     const id = await ensureCourse();
     if (id) {
@@ -281,6 +282,10 @@ export default function CourseEditorForm({
   };
 
   const handleSubmit = async () => {
+    if (isUploadingThumbnail || isUploadingVideo) {
+      toast.error("Please wait for the upload to finish before submitting.");
+      return;
+    }
     if (showTrainerPicker && !selectedTrainerId) {
       toast.error("Select which trainer this course should be attributed to.");
       setActiveTab("basic");
@@ -365,7 +370,7 @@ export default function CourseEditorForm({
             </span>
           )}
           <Button variant="outline" onClick={handlePreview} className="bg-white border-gray-200 font-bold">Preview</Button>
-          <Button onClick={handleSaveDraft} disabled={isSaving} className="bg-gray-900 hover:bg-gray-800 text-white font-bold shadow-md w-32 transition-all">
+          <Button onClick={handleSaveDraft} disabled={isSaving || isUploadingThumbnail || isUploadingVideo} className="bg-gray-900 hover:bg-gray-800 text-white font-bold shadow-md w-32 transition-all">
             {isSaving ? "Saving..." : <><Save className="w-4 h-4 mr-2" /> Save Draft</>}
           </Button>
         </div>
@@ -468,7 +473,7 @@ export default function CourseEditorForm({
                   <h3 className="text-lg font-bold text-gray-900 mb-2">Promotional Intro Video</h3>
                   <p className="text-sm text-gray-500 mb-4">Students who watch a well-made promo video are 5x more likely to enroll. Keep it under 2 minutes.</p>
 
-                  <input type="file" id="intro-video-input" className="hidden" accept="video/*" onChange={(e) => e.target.files?.[0] && startVideoUpload([e.target.files[0]])} />
+                  <input type="file" id="intro-video-input" className="hidden" accept="video/*" onChange={(e) => e.target.files?.[0] && handleIntroVideoFile(e.target.files[0])} />
 
                   <label htmlFor="intro-video-input" className={`border-2 border-dashed ${previewUrl ? 'border-green-400 bg-green-50/50' : 'border-gray-300 hover:bg-gray-50 hover:border-background-darkYellow'} rounded-2xl p-12 text-center transition-all cursor-pointer group block`}>
                     {isUploadingVideo ? (
@@ -602,7 +607,7 @@ export default function CourseEditorForm({
               </CardContent>
               <div className="p-6 border-t border-gray-100 flex justify-between bg-gray-50/30">
                 <Button variant="outline" onClick={() => setActiveTab("curriculum")} className="font-bold bg-white">Back to Curriculum</Button>
-                <Button onClick={handleSubmit} disabled={isSaving} className="bg-gray-900 hover:bg-gray-800 text-white font-bold h-12 px-8 rounded-xl shadow-lg w-48">
+                <Button onClick={handleSubmit} disabled={isSaving || isUploadingThumbnail || isUploadingVideo} className="bg-gray-900 hover:bg-gray-800 text-white font-bold h-12 px-8 rounded-xl shadow-lg w-48">
                   {isSaving ? "Submitting..." : "Submit for Review"}
                 </Button>
               </div>

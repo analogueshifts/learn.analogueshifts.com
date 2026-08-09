@@ -8,7 +8,8 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useUploadThing } from "@/lib/uploadthing";
+import toast from "react-hot-toast";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary-client";
 
 export type LessonType = "video" | "article" | "quiz" | "assignment";
 
@@ -101,19 +102,33 @@ const LessonEditor = ({
   isFirstLesson: boolean;
   updateLesson: (id: string, field: string, value: any) => void;
 }) => {
-  const { startUpload: startVideoUpload, isUploading: isUploadingVideo } = useUploadThing("trainerVideoUploader", {
-    onClientUploadComplete: (res) => {
-      if (res?.[0]) updateLesson(lesson.id, "url", res[0].serverData.videoUrl);
-    },
-  });
-  const { startUpload: startResourceUpload, isUploading: isUploadingResource } = useUploadThing("assignmentResourceUploader", {
-    onClientUploadComplete: (res) => {
-      if (res?.[0]) {
-        updateLesson(lesson.id, "url", res[0].serverData.url);
-        updateLesson(lesson.id, "fileName", res[0].serverData.name);
-      }
-    },
-  });
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingResource, setIsUploadingResource] = useState(false);
+
+  const startVideoUpload = async ([file]: File[]) => {
+    setIsUploadingVideo(true);
+    try {
+      const url = await uploadToCloudinaryClient(file, "video");
+      updateLesson(lesson.id, "url", url);
+    } catch {
+      toast.error("Video upload failed. Check your Cloudinary configuration.");
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const startResourceUpload = async ([file]: File[]) => {
+    setIsUploadingResource(true);
+    try {
+      const url = await uploadToCloudinaryClient(file, "assignment");
+      updateLesson(lesson.id, "url", url);
+      updateLesson(lesson.id, "fileName", file.name);
+    } catch {
+      toast.error("Resource upload failed. Check your Cloudinary configuration.");
+    } finally {
+      setIsUploadingResource(false);
+    }
+  };
 
   const addQuestion = () => {
     updateLesson(lesson.id, "quizQuestions", [

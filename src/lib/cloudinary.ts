@@ -11,11 +11,13 @@ export { cloudinary };
 export async function uploadToCloudinary(
   buffer: Buffer,
   folder: string,
-  resourceType: "image" | "raw" = "image"
+  resourceType: "image" | "video" | "raw" = "image"
 ): Promise<{ url: string; publicId: string }> {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: resourceType },
+      // Videos can take a while on a slow connection; give them more room than
+      // the SDK's default before treating the upload as failed.
+      { folder, resource_type: resourceType, timeout: resourceType === "video" ? 300_000 : 60_000 },
       (error, result) => {
         if (error || !result) return reject(error ?? new Error("Upload failed"));
         resolve({ url: result.secure_url, publicId: result.public_id });

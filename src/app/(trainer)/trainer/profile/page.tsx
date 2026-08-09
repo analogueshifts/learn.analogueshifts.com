@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, User, Mail, Shield, CheckCircle, Linkedin, Twitter, Github, Key, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useUploadThing } from "@/lib/uploadthing";
+import { uploadToCloudinaryClient } from "@/lib/cloudinary-client";
 
 interface Profile {
   id: string;
@@ -68,12 +68,30 @@ export default function TrainerProfilePage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const { startUpload, isUploading } = useUploadThing("avatarUploader", {
-    onClientUploadComplete: () => {
-      fetch("/api/user/me").then((res) => res.json()).then((body) => body.success && setProfile(body.data));
-      toast.success("Profile photo updated");
-    },
-  });
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarFile = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const url = await uploadToCloudinaryClient(file, "avatar");
+      const response = await fetch("/api/user/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: url }),
+      });
+      const body = await response.json();
+      if (body.success) {
+        setProfile(body.data);
+        toast.success("Profile photo updated");
+      } else {
+        toast.error(body.error ?? "Failed to update profile photo");
+      }
+    } catch {
+      toast.error("Photo upload failed. Check your Cloudinary configuration.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -158,7 +176,7 @@ export default function TrainerProfilePage() {
                 className="hidden"
                 id="avatar-input"
                 accept="image/*"
-                onChange={(e) => e.target.files?.[0] && startUpload([e.target.files[0]])}
+                onChange={(e) => e.target.files?.[0] && handleAvatarFile(e.target.files[0])}
               />
               <label htmlFor="avatar-input" className="relative group cursor-pointer mb-5 block">
                 <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
